@@ -1,0 +1,75 @@
+
+:root {
+	--dark: #070707;
+
+	--adaptiveFont: calc(var(--sizeindex) * 0.95);
+	--animation: 0.8s cubic-bezier(0.2, 0.7, 0, 1);
+}
+
+
+
+.slider__wrapper {
+	top: 2vh;
+	transition: var(--animation)!important;
+	will-change: transform;
+}
+.slide{
+	height: 75vh;
+	overflow: hidden;
+	cursor: pointer;
+	transition: transform var(--animation), box-shadow var(--animation);
+}
+.slider_bg .slide {
+	height: 100vh;
+}
+.game-poster{
+	width: 130%;
+	height: 100%;
+	background-size: contain;
+	position: absolute;
+	left: -10%;
+	transition: var(--animation)!important;
+	will-change: transform;
+	
+}
+.slider_bg{
+	z-index:0;
+	position: relative;
+	top: -90vh;
+	opacity: .15;
+	filter: blur(120px) saturate(10);
+}
+
+.description {
+	font-size: var(--adaptiveFont);
+	position: absolute;
+	top: 20vh;
+	left: 8vw;
+	max-width: 20vw;
+	transition: var(--animation);
+
+}
+
+
+
+.logo {
+	font-size: calc(var(--sizeindex) * 2.6);
+	font-weight: 300;
+	display: inline-block;
+	background: linear-gradient(45deg, DarkMagenta, Tomato, Violet);
+	-webkit-background-clip: text;
+	background-clip: text;
+	-webkit-text-fill-color: transparent;
+}
+.description p {
+	opacity: .9;
+	transition: transform var(--transition);
+	transition-duration: 3s;
+}
+.description.hidden {
+	opacity: 0;
+	transform: translateY(5vh);
+}
+.description.hidden p {
+	transform: translateY(2vh);
+}

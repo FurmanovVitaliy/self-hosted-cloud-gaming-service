@@ -1,0 +1,119 @@
+package games
+
+import (
+	"cloud/pkg/logger"
+	"context"
+	"errors"
+	"fmt"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
+	"gopkg.in/mgo.v2/bson"
+)
+
+type db struct {
+	collection *mongo.Collection
+	logger     *logger.Logger
+}
+
+func NewStorage(database *mongo.Database, collection string, logger *logger.Logger) Storage {
+	return &db{
+		collection: database.Collection(collection),
+		logger:     logger,
+	}
+}
+
+func (d *db) Create(ctx context.Context, gt Game) (string, error) {
+	d.logger.Debug("create game title")
+	result, err := d.collection.InsertOne(ctx, gt)
+	if err != nil {
+		return "", fmt.Errorf("failed to create game title due to error:%v", err)
+	}
+
+	d.logger.Debug("convert InsertedID to ObjectID")
+	oid, ok := result.InsertedID.(primitive.ObjectID)
+	if ok {
+		return oid.Hex(), nil
+	}
+
+	d.logger.Trace(gt)
+	return "", fmt.Errorf("failed to convert objectID to hex. oid:%s", oid)
+}
+func (d *db) FindAll(ctx context.Context) (games []Game, err error) {
+	coursor, err := d.collection.Find(ctx, bson.M{})
+	if coursor.Err() != nil {
+		return games, fmt.Errorf("failed to find all game titles due to error:%v", err)
+	}
+	if err := coursor.All(ctx, &games); err != nil {
+		return games, fmt.Errorf("failed to read all documents from coursor due to error:%v", err)
+	}
+	return games, nil
+}
+func (d *db) FindOne(ctx context.Context, id string) (g Game, err error) {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return g, fmt.Errorf("failed to convert hex to ObjectID. hex:%s", id)
+	}
+	filter := bson.M{"_id": oid}
+	result := d.collection.FindOne(ctx, filter)
+	if result.Err() != nil {
+		if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			return g, err
+		}
+		return g, fmt.Errorf("failed to find game title by id:%s due to error:%v", id, err)
+	}
+	if err := result.Decode(&g); err != nil {
+		return g, fmt.Errorf("failed to decode game title from Db with id:%s", id)
+	}
+	return g, nil
+}
+func (d *db) Update(ctx context.Context, g Game) error {
+	oid, err := primitive.ObjectIDFromHex(g.ID)
+	if err != nil {
+		return fmt.Errorf("failed to decode game title from Db with id:%s", g.ID)
+	}
+	filter := bson.M{"_id": oid}
+	userBytes, err := bson.Marshal(g)
+	if err != nil {
+		return fmt.Errorf("failed to marshal game title due to err:%v", err)
+	}
+	var updateUserObject bson.M
+	if err := bson.Unmarshal(userBytes, &updateUserObject); err != nil {
+		return fmt.Errorf("failed to unmarshal game title bytes due to err:%v", err)
+	}
+
+	delete(updateUserObject, "_id")
+
+	update := bson.M{
+		"$set": updateUserObject,
+	}
+
+	result, err := d.collection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		return fmt.Errorf("failed to execute update game title query due to error:%v", err)
+	}
+	if result.MatchedCount == 0 {
+		return err
+	}
+	d.logger.Tracef("Matched %d document(s) and modified %d document(s)", result.MatchedCount, result.MatchedCount)
+	return nil
+}
+func (d *db) Delete(ctx context.Context, id string) error {
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return fmt.Errorf("failed to decode game title from Db with id:%s", id)
+	}
+
+	filter := bson.M{"_id": oid}
+
+	result, err := d.collection.DeleteOne(ctx, filter)
+	if err != nil {
+		return fmt.Errorf("failed to execute delete game title query due to error:%v", err)
+	}
+	if result.DeletedCount == 0 {
+		//TODO ErrEntityNotFound
+		return fmt.Errorf("not found")
+	}
+	d.logger.Tracef("Dleted %d document(s) ", result.DeletedCount)
+	return nil
+}
