@@ -35,11 +35,13 @@ const fetchGet = (url, config) => {
     return baseFetch(url, config)
 }
 
-const fetchPost = (url, params ={}, config = {}) => {
+const fetchPost = (url, config = {},json ={}) => {
+
     return baseFetch(url, {
         ...config,
-        method: 'POST'
-    }, params)
+        method: 'POST',
+        body: json
+    })
 }
 
 const fetchPut = (url, params ={}, config = {}) => {

@@ -39,9 +39,9 @@ class RoomsComponent extends HTMLElement {
             console.log(room);
             const roomComponent = document.createElement('room-component');
             const title = roomComponent.shadowRoot.querySelector('.room-title');
-            title.textContent = room.name;
-            const id = roomComponent.shadowRoot.querySelector('.room-id');
-            id.textContent = room.id;
+            title.textContent = `Game: ${room.game}`
+            const id = roomComponent.shadowRoot.querySelector('.room-uuid');
+            id.textContent = `${room.uuid}`
             roomList.appendChild(roomComponent);
         })
        });

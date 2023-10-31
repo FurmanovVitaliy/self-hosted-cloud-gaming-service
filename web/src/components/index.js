@@ -5,5 +5,5 @@ import './library-component'
 import './form-component'
 import './room-component'
 import './rooms-component'
-
+import './room-display'
 

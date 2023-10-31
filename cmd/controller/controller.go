@@ -75,7 +75,7 @@ func (c *Controller) connectToDB() {
 	userHandler.Register(router)
 	hubHandler.Register(router)
 	gamesHandler.Register(router)
-	go hub.Run()
+	//go hub.Run()
 	http.ListenAndServe(":8000", cors.Handler(router))
 
 }

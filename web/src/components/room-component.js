@@ -8,10 +8,10 @@ class RoomComponent extends HTMLElement {
         const wrapper = document.createElement('div')
         wrapper.setAttribute('class', 'room-block')
         wrapper.innerHTML = `
-        <div class="room-title">Name</div>
-        <div class="room-description">Thi is game</div>
-        <div class="room-players">1 play </div>
-        <div class="room-id">34687</div>
+        <div class="room-title"></div>
+        <div class="room-description"></div>
+        <div class="room-players"></div>
+        <div class="room-uuid"></div>
         `
         const style = document.createElement('style')
         
@@ -39,7 +39,7 @@ class RoomComponent extends HTMLElement {
     
     connectedCallback(){
         const shadow = this.shadowRoot;
-        const id = shadow.querySelector('.room-id');
+        const id = shadow.querySelector('.room-uuid');
         id.addEventListener('click', (e) => {navigateTo(routes.Room.reverse({uuid: e.target.textContent})); console.log(e.target.textContent)})
     }
 }

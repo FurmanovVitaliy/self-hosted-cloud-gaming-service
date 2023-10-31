@@ -1,22 +1,22 @@
 package hub
 
 type Hub struct {
-	Rooms      map[string]*Room
-	Register   chan *Peer
-	Unregister chan *Peer
-	Broadcast  chan *Message
+	Rooms map[string]*Room
+	///Register   chan *Peer
+	//Unregister chan *Peer
+	//Broadcast  chan *Message
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		Rooms:      make(map[string]*Room),
-		Register:   make(chan *Peer),
-		Unregister: make(chan *Peer),
-		Broadcast:  make(chan *Message),
+		Rooms: make(map[string]*Room),
+		//Register:   make(chan *Peer),
+		//Unregister: make(chan *Peer),
+		//Broadcast:  make(chan *Message),
 	}
 }
 
-func (h *Hub) Run() {
+/*func (h *Hub) Run() {
 	for {
 		select {
 		case peer := <-h.Register:
@@ -50,3 +50,4 @@ func (h *Hub) Run() {
 		}
 	}
 }
+*/

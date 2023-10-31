@@ -1,3 +1,6 @@
+import { createRoom } from "../api/roomsApi";
+import { navigateTo } from "../router"
+import { v4 as uuidv4 } from 'uuid';
 
 class GameComponent extends HTMLElement {
     constructor(){
@@ -12,8 +15,9 @@ class GameComponent extends HTMLElement {
         name.setAttribute('class', 'game-name')
         const button = document.createElement('button')
         button.setAttribute('class', 'create-room-button')
-        button.textContent = 'Create Room'
+       
         name.appendChild(button)
+
 
       
 
@@ -46,9 +50,6 @@ class GameComponent extends HTMLElement {
         }
       
         `
-
-
-
         shadow.appendChild(style)
         shadow.appendChild(poster)
         shadow.appendChild(name)
@@ -57,8 +58,23 @@ class GameComponent extends HTMLElement {
 
     connectedCallback(){
         const shadow = this.shadowRoot;
-        const href = this.getAttribute('id')
+        this.createRoom()
     }
     
+
+    createRoom(){
+        const shadow = this.shadowRoot;
+        const gameTitle = shadow.querySelector('.game-name').textContent
+        const button = shadow.querySelector('.create-room-button')
+        console.log(button)
+       
+        const uuid = uuidv4();
+        button.addEventListener('click', () => {
+            createRoom(uuid,gameTitle,{}).then((res) => {
+           // navigateTo('/rooms/' + uuid)
+            })
+        
+        })
+    }
 }
 customElements.define('game-title', GameComponent )
