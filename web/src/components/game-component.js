@@ -66,8 +66,6 @@ class GameComponent extends HTMLElement {
         const shadow = this.shadowRoot;
         const gameTitle = shadow.querySelector('.game-name').textContent
         const button = shadow.querySelector('.create-room-button')
-        console.log(button)
-       
         const uuid = uuidv4();
         button.addEventListener('click', () => {
             createRoom(uuid,gameTitle,{}).then((res) => {

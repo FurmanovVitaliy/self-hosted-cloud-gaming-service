@@ -1,3 +1,4 @@
+import {log} from '../common/log.js';
 import Swiper from 'swiper';
 import 'swiper/css';
 import {Keyboard, Parallax,Controller} from 'swiper/modules'
@@ -39,6 +40,7 @@ class LibraryComponent extends HTMLElement {
     
     connectedCallback() {
             this.initSwiper();
+            log.info('LibraryComponent connected');
             this.addSlides();
         
         }

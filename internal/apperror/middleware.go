@@ -35,3 +35,7 @@ func Middleware(h appHandler) http.HandlerFunc {
 		}
 	}
 }
+func WebRTCError(err error) *AppError {
+	return NewAppError(err, "internal system error", err.Error(), "US-000000")
+
+}

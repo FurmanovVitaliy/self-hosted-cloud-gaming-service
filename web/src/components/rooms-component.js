@@ -36,7 +36,6 @@ class RoomsComponent extends HTMLElement {
        
        getRooms().then((rooms)=>{
        rooms.forEach((room) => {
-            console.log(room);
             const roomComponent = document.createElement('room-component');
             const title = roomComponent.shadowRoot.querySelector('.room-title');
             title.textContent = `Game: ${room.game}`

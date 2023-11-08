@@ -40,7 +40,7 @@ class RoomComponent extends HTMLElement {
     connectedCallback(){
         const shadow = this.shadowRoot;
         const id = shadow.querySelector('.room-uuid');
-        id.addEventListener('click', (e) => {navigateTo(routes.Room.reverse({uuid: e.target.textContent})); console.log(e.target.textContent)})
+        id.addEventListener('click', (e) => {navigateTo(routes.Room.reverse({uuid: e.target.textContent}))})
     }
 }
 

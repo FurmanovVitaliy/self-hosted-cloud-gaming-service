@@ -1,3 +1,4 @@
+import { log } from "../common/log.js";
 import { authApi } from "../api";
 
 class FakeForm extends HTMLElement {
@@ -72,17 +73,13 @@ class FakeForm extends HTMLElement {
     const inputPassword = shadow.querySelector('.input-password')
 
     okButton.addEventListener('click', (e) => {
-        console.log("emeil: ", inputText.value)
-        console.log("password: ", inputPassword.value)
+      //  log.trace("emeil: ", inputText.value)
+        //console.trace("password: ", inputPassword.value)
         if (inputText && inputPassword){
             authApi.login(inputText.value,inputPassword.value).then((response) => {
               console.log(response.headers)
-              if (response.headers.get('Set-Cookie')){
-                console.log("куки есть в ответе")
-              }else{
-                  console.log("куки нет в ответе")}
-              
-                console.log(response)
+              (response.headers.get('Set-Cookie')) ? log.debug("Coockie present in response") : log.debug("Coockie not present in response")
+                console.bebug(response)
                 response.json().then((data) => {
                     console.log(data)
                     if (data.status === 'ok'){

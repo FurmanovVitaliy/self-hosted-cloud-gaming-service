@@ -1,21 +1,20 @@
 package hub
 
 import (
-	"github.com/gorilla/websocket"
-	"github.com/pion/webrtc/v3"
+	"cloud/pkg/network/websocket"
+	"cloud/pkg/webrtc"
 )
 
 type Room struct {
-	UUID   string
-	Game   string
-	Conn   *websocket.Conn
-	WebRTC *webrtc.PeerConnection
+	UUID      string
+	Game      string
+	Peer      *webrtc.Peer
+	Websocket *websocket.Websocket
 }
 
 type CreateRoomReq struct {
 	UUID string `json:"uuid"`
 	Game string `json:"game"`
-	Peer *Peer  `json:"peer"`
 }
 type CreateRoomRes struct {
 	Game string `json:"game"`
