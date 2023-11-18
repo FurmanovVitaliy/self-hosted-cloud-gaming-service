@@ -11,10 +11,10 @@ import (
 )
 
 type Peer struct {
-	conn         *webrtc.PeerConnection
-	logger       logger.Logger
-	OnMessage    func(data []byte)
-	ICECandidate []any
+	conn       *webrtc.PeerConnection
+	logger     logger.Logger
+	OnMessage  func(data []byte)
+	Candidates chan webrtc.ICECandidateInit
 
 	audio *webrtc.TrackLocalStaticRTP
 	video *webrtc.TrackLocalStaticRTP
@@ -23,12 +23,12 @@ type Peer struct {
 
 func NewPeer() *Peer {
 	return &Peer{
-		logger:       logger.Init("7"),
-		ICECandidate: make([]any, 0),
+		Candidates: make(chan webrtc.ICECandidateInit),
+		logger:     logger.Init("7"),
 	}
 }
 
-func (p *Peer) NewWebRTC(vCodec, aCodec string) (sdp any, err error) {
+func (p *Peer) NewWebRTC(vCodec, aCodec string, sendICE func(any) error) (sdp any, err error) {
 	p.conn, err = webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{{URLs: []string{"stun:stun1.l.google.com:19302"}}},
 	})
@@ -38,16 +38,21 @@ func (p *Peer) NewWebRTC(vCodec, aCodec string) (sdp any, err error) {
 	p.conn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		p.logger.Infof("Connection State has changed:  %s \n", connectionState.String())
 	})
+
 	p.conn.OnICECandidate(func(candidate *webrtc.ICECandidate) {
 		if candidate == nil {
+			singnal := make(map[string]string)
+			singnal["signal"] = "Server ICE gathering is complete"
+			sendICE(singnal)
 			p.logger.Debug("ICE gathering is complete")
-			return
 		}
-		ice := candidate.ToJSON()
-
-		p.logger.Debug("New ICE candidate: ", ice)
-		p.ICECandidate = append(p.ICECandidate, ice)
-
+		if candidate != nil {
+			ice := candidate.ToJSON()
+			if err := sendICE(ice); err != nil {
+				p.logger.Error("Error while sending ICE candidate", err)
+			}
+			p.logger.Debug("ICE candidate found :", ice)
+		}
 	})
 	// plug in the [video] track (out)
 	video, err := newTrack("video", "video", vCodec)

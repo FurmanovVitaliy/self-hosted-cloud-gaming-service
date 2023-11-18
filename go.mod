@@ -23,6 +23,7 @@ require (
 	github.com/Henry-Sarabia/apicalypse v1.0.2 // indirect
 	github.com/Henry-Sarabia/blank v3.0.0+incompatible // indirect
 	github.com/Henry-Sarabia/sliceconv v1.0.2 // indirect
+	github.com/bendahl/uinput v1.6.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect
 	github.com/google/uuid v1.4.0 // indirect

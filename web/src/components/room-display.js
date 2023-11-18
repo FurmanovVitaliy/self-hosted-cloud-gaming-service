@@ -2,6 +2,7 @@ import constants from "../common/constants";
 import WebRtc from "../common/network/webrtc";
 import notification from "../common/notification";
 import log from "../common/log";
+import GamepadState, { startUpdatingGamepadState } from "../common/input";
 
 class RoomDisplay extends HTMLElement {
   constructor() {
@@ -23,13 +24,9 @@ class RoomDisplay extends HTMLElement {
 
   connectedCallback() {
     this.upgardeConnection();
-    notification.execute(constants.event.RTC_INPUT_READY,()=>{
-      console.log(this.webrtc.dataChannel.send("test"))
-    },true);
+    notification.execute(constants.event.RTC_INPUT_READY,startUpdatingGamepadState,true);
     
   }
-
-
   upgardeConnection() {
     
     const url = window.location.pathname;

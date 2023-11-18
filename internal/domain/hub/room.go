@@ -3,6 +3,8 @@ package hub
 import (
 	"cloud/pkg/network/websocket"
 	"cloud/pkg/webrtc"
+
+	"github.com/bendahl/uinput"
 )
 
 type Room struct {
@@ -10,6 +12,7 @@ type Room struct {
 	Game      string
 	Peer      *webrtc.Peer
 	Websocket *websocket.Websocket
+	Gamepad   uinput.Gamepad
 }
 
 type CreateRoomReq struct {
