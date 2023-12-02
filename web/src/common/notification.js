@@ -13,7 +13,6 @@ export const notification = (()=>{
             }
             
             function terminate(){delete storage[event][index]}
-            console.log(storage)
             return Object.freeze({terminate})
         },
         

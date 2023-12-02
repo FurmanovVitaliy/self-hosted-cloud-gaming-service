@@ -73,20 +73,19 @@ class FakeForm extends HTMLElement {
     const inputPassword = shadow.querySelector('.input-password')
 
     okButton.addEventListener('click', (e) => {
-      //  log.trace("emeil: ", inputText.value)
-        //console.trace("password: ", inputPassword.value)
+ 
         if (inputText && inputPassword){
             authApi.login(inputText.value,inputPassword.value).then((response) => {
               console.log(response.headers)
-              (response.headers.get('Set-Cookie')) ? log.debug("Coockie present in response") : log.debug("Coockie not present in response")
-                console.bebug(response)
+              //(response.headers.get('Set-Cookie')) ? log.debug("Coockie present in response") : log.debug("Coockie not present in response")
+                //console.bebug(response)
                 response.json().then((data) => {
                     console.log(data)
-                    if (data.status === 'ok'){
+                    if (data){
                         console.log("Auth OK")
-                        localStorage.setItem('token', data.token)
-                        localStorage.setItem('user', data.user)
-                        window.location.href = '/game'
+                        //localStorage.setItem('token', data.token)
+                        //localStorage.setItem('user', data.user)
+                        window.location.href = '/games'
                     }
                 })
             })

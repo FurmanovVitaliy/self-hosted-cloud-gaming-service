@@ -69,7 +69,7 @@ class GameComponent extends HTMLElement {
         const uuid = uuidv4();
         button.addEventListener('click', () => {
             createRoom(uuid,gameTitle,{}).then((res) => {
-           // navigateTo('/rooms/' + uuid)
+            navigateTo('/rooms/' + uuid)
             })
         
         })

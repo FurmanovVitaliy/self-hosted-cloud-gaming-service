@@ -1,6 +1,6 @@
 import appConstants from "../common/constants"
 
-const apiServer = import.meta.env.DEV ? 'http://localhost:8000' : 'http://localhost:8000'
+const apiServer = import.meta.env.DEV ? 'https://192.168.1.13:8000' : 'https://192.168.1.13:8000'
 
 const baseFetch = (url, config = {}, params) => {
     return new Promise((resolve, reject) => {

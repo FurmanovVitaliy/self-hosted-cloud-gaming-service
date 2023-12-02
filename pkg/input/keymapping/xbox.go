@@ -13,12 +13,12 @@ type XboxGpadInput struct {
 	RJ    int `json:"button14"`
 
 	LS struct {
-		X float32 `json:"x"`
-		Y float32 `json:"y"`
+		X string `json:"x"`
+		Y string `json:"y"`
 	} `json:"joystick0"`
 	RS struct {
-		X float32 `json:"x"`
-		Y float32 `json:"y"`
+		X string `json:"x"`
+		Y string `json:"y"`
 	} `json:"joystick1"`
 	Triger struct {
 		RT float32 `json:"x"`

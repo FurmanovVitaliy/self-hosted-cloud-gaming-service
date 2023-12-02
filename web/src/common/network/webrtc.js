@@ -22,9 +22,11 @@ export class WebRTC {
       this.mediaStream = document.createElement(e.track.kind);
       this.mediaStream.srcObject = e.streams[0];
       this.mediaStream.autoplay = true;
-      this.mediaStream.controls = true;
+      this.mediaStream.playsinline = true;
+      this.mediaStream.controls = false;
       this.display.appendChild(this.mediaStream);
-    };
+      this.mediaStream.play()
+    }
     this.conn.addTransceiver("video", { direction: "recvonly" });
     this.conn.addTransceiver("audio", { direction: "recvonly" });
     
@@ -46,7 +48,7 @@ export class WebRTC {
       log.info(`[rtc] State: ${this.conn.iceConnectionState}`);
       switch (this.conn.iceConnectionState) {
         case "connected":
-          //notification.broadcast(constants.event.RTC_CONNECTION_READY);
+          notification.broadcast(constants.event.RTC_CONNECTION_READY);
           break;
           case "disconnected":
             case "failed":
@@ -57,6 +59,7 @@ export class WebRTC {
           };
           this.conn.onicecandidate = (e) => {
             if (e.candidate) {
+    
               this.localCandidates.push(e.candidate);
       }
       
@@ -107,6 +110,7 @@ export class WebRTC {
       this.dataChannel = null;
     }
     this.remoteCandidates = [];
+    log.info("[rtc] Connection has been closed");
   }
 
   input(data) {

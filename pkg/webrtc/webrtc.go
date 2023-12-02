@@ -2,19 +2,26 @@ package webrtc
 
 import (
 	"cloud/pkg/logger"
-	"cloud/pkg/network/socket"
+	"net"
+	"time"
+
 	"encoding/json"
 	"fmt"
+
 	"strings"
 
-	"github.com/pion/webrtc/v3"
+	"github.com/pion/webrtc/v4"
 )
+
+//TODO: add madia engine for codecs controle & all data must be in base 64
 
 type Peer struct {
 	conn       *webrtc.PeerConnection
 	logger     logger.Logger
 	OnMessage  func(data []byte)
 	Candidates chan webrtc.ICECandidateInit
+
+	signalStop chan struct{}
 
 	audio *webrtc.TrackLocalStaticRTP
 	video *webrtc.TrackLocalStaticRTP
@@ -23,11 +30,11 @@ type Peer struct {
 
 func NewPeer() *Peer {
 	return &Peer{
+		signalStop: make(chan struct{}),
 		Candidates: make(chan webrtc.ICECandidateInit),
 		logger:     logger.Init("7"),
 	}
 }
-
 func (p *Peer) NewWebRTC(vCodec, aCodec string, sendICE func(any) error) (sdp any, err error) {
 	p.conn, err = webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{{URLs: []string{"stun:stun1.l.google.com:19302"}}},
@@ -37,6 +44,12 @@ func (p *Peer) NewWebRTC(vCodec, aCodec string, sendICE func(any) error) (sdp an
 	}
 	p.conn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		p.logger.Infof("Connection State has changed:  %s \n", connectionState.String())
+		switch connectionState {
+		case webrtc.ICEConnectionStateDisconnected:
+		case webrtc.ICEConnectionStateFailed:
+		case webrtc.ICEConnectionStateClosed:
+			p.Disconnect()
+		}
 	})
 
 	p.conn.OnICECandidate(func(candidate *webrtc.ICECandidate) {
@@ -55,7 +68,7 @@ func (p *Peer) NewWebRTC(vCodec, aCodec string, sendICE func(any) error) (sdp an
 		}
 	})
 	// plug in the [video] track (out)
-	video, err := newTrack("video", "video", vCodec)
+	video, err := newTrack("video", "pion", vCodec)
 	if err != nil {
 		p.logger.Error("Error while creating video track", err)
 	}
@@ -68,7 +81,7 @@ func (p *Peer) NewWebRTC(vCodec, aCodec string, sendICE func(any) error) (sdp an
 	p.logger.Debugf("Added [%s] track", video.Codec().MimeType)
 
 	// plug in the [audio] track (out)
-	audio, err := newTrack("audio", "audio", aCodec)
+	audio, err := newTrack("audio", "pion", aCodec)
 	if err != nil {
 		p.logger.Error("Error while creating audio track", err)
 	}
@@ -118,7 +131,7 @@ func (p *Peer) SetCandidatesAndSDP(data interface{}) {
 		p.logger.Debug(answer)
 		_ = p.conn.SetRemoteDescription(answer)
 	}
-	if candidate.UsernameFragment != nil {
+	if candidate.Candidate != "" {
 		p.logger.Debug("Received candidate:")
 		p.logger.Debug(candidate)
 		_ = p.conn.AddICECandidate(candidate)
@@ -133,18 +146,33 @@ func (p *Peer) SendData(data []byte) {
 }
 
 func (p *Peer) SendVideo() {
-	listener, err := socket.NewVideoUDPListener()
+
+	//listener, err := socket.NewVideoUDPListener()
+	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP("127.0.0.1"), Port: 5004})
 	if err != nil {
-		p.logger.Errorf("error occurred while docket creating: %s", err)
+		p.logger.Errorf("error occurred while socket creating: %s", err)
 	}
-	rtpBuf := make([]byte, 3200)
+	defer listener.Close()
+	listener.SetReadBuffer(1000000)
+	rtpBuf := make([]byte, 5000)
 	for {
-		n, _, err := listener.ReadFrom(rtpBuf)
-		if err != nil {
-			p.logger.Errorf("error occurred while data reading: %s", err)
-		}
-		if _, err = p.video.Write(rtpBuf[:n]); err != nil {
-			p.logger.Errorf("error occurred while video sending: %s", err)
+		select {
+		case <-p.signalStop:
+			p.logger.Info("Stop video sending")
+			listener.Close()
+			listener = nil
+
+			return
+		default:
+			n, _, err := listener.ReadFrom(rtpBuf)
+			if err != nil {
+				p.logger.Errorf("error occurred while data reading: %s", err)
+				return
+			}
+			if _, err = p.video.Write(rtpBuf[:n]); err != nil {
+				p.logger.Errorf("error occurred while video sending: %s", err)
+				return
+			}
 		}
 	}
 }
@@ -152,7 +180,15 @@ func (p *Peer) SendVideo() {
 func (p *Peer) SendAudio(data []byte) {}
 
 func (p *Peer) Disconnect() {
+	close(p.signalStop)
+	time.Sleep(1 * time.Second)
+	p.logger.Info("Disconnecting from peer")
+	p.video = nil
+	p.audio = nil
+	p.data.Close()
+	p.data = nil
 	p.conn.Close()
+
 }
 
 func newTrack(id string, label string, codec string) (*webrtc.TrackLocalStaticRTP, error) {
@@ -175,6 +211,7 @@ func newTrack(id string, label string, codec string) (*webrtc.TrackLocalStaticRT
 	if mime == "" {
 		return nil, fmt.Errorf("unsupported codec %s:%s", id, codec)
 	}
+
 	return webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: mime}, id, label)
 }
 

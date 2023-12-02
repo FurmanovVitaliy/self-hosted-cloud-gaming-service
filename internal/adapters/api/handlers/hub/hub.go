@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"cloud/pkg/network/websocket"
 
@@ -72,11 +73,11 @@ func (h *Handler) createRoom(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) upgradeRoomConnection(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
 	UUID := p.ByName("uuid")
 	room := h.hub.Rooms[UUID]
-	room.Websocket = websocket.New(1024, 1024, UUID)
+	room.Websocket = websocket.New(UUID)
 	room.Websocket.Upgrade(w, r)
 
 	room.Peer = webrtc.NewPeer()
-	offer, err := room.Peer.NewWebRTC("vp8", "opus", room.Websocket.SendICE)
+	offer, err := room.Peer.NewWebRTC("h264", "opus", room.Websocket.SendICE)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -94,49 +95,44 @@ func (h *Handler) upgradeRoomConnection(w http.ResponseWriter, r *http.Request, 
 }
 
 var vg, _ = uinput.CreateGamepad("/dev/uinput", []byte("testpad"), 045, 955)
-var vg1, _ = uinput.CreateGamepad("/dev/uinput", []byte("test"), 4235, 3453)
+
+var state = keymapping.XboxGpadInput{}
 
 func handleInput(data []byte) {
 	fmt.Println("handle input: ", string(data))
-	state := keymapping.XboxGpadInput{}
-	err := json.Unmarshal(data, &state)
-	if err != nil {
-	}
+	json.Unmarshal(data, &state)
 
-	// Обработка кнопок
+	x, _ := strconv.ParseFloat(state.RS.X, 32)
+	y, _ := strconv.ParseFloat(state.RS.Y, 32)
+
+	vg.RightStickMove(float32(x), float32(y))
+
+	lsX, _ := strconv.ParseFloat(state.LS.X, 32)
+	lsY, _ := strconv.ParseFloat(state.LS.Y, 32)
+	vg.LeftStickMove(float32(lsX), float32(lsY))
+
 	if state.A == 1 {
-		vg.ButtonPress(keymapping.ButtonA)
-	}
-	if state.B == 1 {
-		vg.ButtonPress(keymapping.ButtonB)
+		vg.ButtonDown(uinput.ButtonSouth)
+	} else {
+		vg.ButtonUp(uinput.ButtonSouth)
 	}
 	if state.X == 1 {
-		vg.ButtonPress(keymapping.ButtonX)
+		vg.ButtonPress(uinput.ButtonWest)
 	}
 	if state.Y == 1 {
-		vg.ButtonPress(keymapping.ButtonY)
+		vg.ButtonPress(uinput.ButtonNorth)
 	}
 	if state.LB == 1 {
-		vg.ButtonPress(keymapping.ButtonLB)
+		vg.ButtonPress(uinput.ButtonBumperLeft)
 	}
 	if state.RB == 1 {
-		vg.ButtonPress(keymapping.ButtonRB)
+		vg.ButtonPress(uinput.ButtonBumperRight)
 	}
 	if state.Start == 1 {
-		vg.ButtonPress(keymapping.ButtonStart)
+		vg.ButtonPress(uinput.ButtonStart)
 	}
 	if state.Main == 1 {
-		vg.ButtonPress(keymapping.ButtonMain)
+		vg.ButtonPress(uinput.ButtonMode)
 	}
-	if state.LJ == 1 {
-		vg.ButtonPress(keymapping.ButtonLJ)
-	}
-	if state.RJ == 1 {
-		vg.ButtonPress(keymapping.ButtonRJ)
-	}
-
-	// Обработка осей
-	vg.LeftStickMove(state.LS.X, state.LS.Y)
-	vg.RightStickMove(state.RS.X, state.RS.Y)
 
 }

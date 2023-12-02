@@ -16,7 +16,7 @@ type Websocket struct {
 	upgrader websocket.Upgrader
 }
 
-func New(readBuf, writeBuf int, ID string) *Websocket {
+func New(ID string) *Websocket {
 	return &Websocket{
 		ID: ID + " room websocket",
 		upgrader: websocket.Upgrader{

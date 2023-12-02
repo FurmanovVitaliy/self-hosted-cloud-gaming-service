@@ -89,9 +89,9 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) error {
 	cookie := &http.Cookie{
 		Name:     "jwt",
 		Value:    u.AccessToken,
-		MaxAge:   60 * 60 * 24,
+		MaxAge:   60 * 60 * 24 * 7,
 		Path:     "/",
-		Domain:   "localhost",
+		Domain:   "192.168.1.13",
 		HttpOnly: true,
 		Secure:   false,
 		SameSite: http.SameSiteDefaultMode,

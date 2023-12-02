@@ -2,13 +2,13 @@ let interval;
 export const startUpdatingGamepadState = (inputHandler) => {
   interval = setInterval(() => {
   return inputHandler(updateGamepadState());
-  }, 1000); // Интервал в миллисекундах (1 секунда)
+  }, 2); // Интервал в миллисекундах 
 };
 
 export const stopUpdatingGamepadState = () => {
   clearInterval(interval); 
 };
-const updateGamepadState = () => {
+export const updateGamepadState = () => {
   let gamepadState = {};
   const gamepad = navigator.getGamepads()[0];
   if (gamepad) {
@@ -31,8 +31,6 @@ const updateGamepadState = () => {
       }
     }
   }
-  return JSON.stringify(gamepadState);
-
-};
+  return JSON.stringify(gamepadState);};
 
 export default startUpdatingGamepadState;

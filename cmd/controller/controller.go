@@ -65,7 +65,7 @@ func (c *Controller) connectToDB() {
 	hubHandler := hubhandler.NewHandler(hub)
 	cors := cors.New(cors.Options{
 		AllowedMethods:   []string{"GET", "POST"},
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   []string{"https://localhost:3000", "https://192.168.1.13:3000"},
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		AllowCredentials: true,
 		Debug:            true,
@@ -76,14 +76,18 @@ func (c *Controller) connectToDB() {
 	hubHandler.Register(router)
 	gamesHandler.Register(router)
 	//go hub.Run()
-	http.ListenAndServe(":8000", cors.Handler(router))
+	certFile := "/home/vitalii/dev/go-code/fileSearch/cert/l.pem"
+	keyFile := "/home/vitalii/dev/go-code/fileSearch/cert/l-key.pem"
+	http.ListenAndServeTLS(":8000", certFile, keyFile, cors.Handler(router))
 
 }
 
 func (c *Controller) startHttpServer() {
+	certFile := "/home/vitalii/dev/go-code/fileSearch/cert/l.crt"
+	keyFile := "/home/vitalii/dev/go-code/fileSearch/cert/l.key"
 	cors := cors.New(cors.Options{
 		AllowedMethods:   []string{"GET", "POST"},
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   []string{"https://localhost:3000", "https://192.168.1.13:3000"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 		Debug:            true,
@@ -100,7 +104,7 @@ func (c *Controller) startHttpServer() {
 	}
 
 	c.logger.Info("HTTP server starting on port 8080")
-	httpServer.ListenAndServe()
+	httpServer.ListenAndServeTLS(certFile, keyFile)
 
 }
 
