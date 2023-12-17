@@ -17,21 +17,27 @@ type JwtClaims struct {
 	jwt.RegisteredClaims
 }
 
-type Service struct {
+type Service interface {
+	GetList(ctx context.Context) ([]User, error)
+	Create(ctx context.Context, req *CreateUserReq) (*CreateUserRes, error)
+	Login(ctx context.Context, req *LogingUserReq) (*LogingUserRes, error)
+}
+
+type service struct {
 	storage Storage
 	loger   *logger.Logger
 	timeout time.Duration
 }
 
-func NewService(srorage Storage, logger *logger.Logger) *Service {
-	return &Service{
+func NewService(srorage Storage, logger *logger.Logger) Service {
+	return &service{
 		storage: srorage,
 		loger:   logger,
 		timeout: 2 * time.Second,
 	}
 }
 
-func (s *Service) GetList(ctx context.Context) ([]User, error) {
+func (s *service) GetList(ctx context.Context) ([]User, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -42,7 +48,7 @@ func (s *Service) GetList(ctx context.Context) ([]User, error) {
 	return users, nil
 }
 
-func (s *Service) Create(ctx context.Context, req *CreateUserReq) (*CreateUserRes, error) {
+func (s *service) Create(ctx context.Context, req *CreateUserReq) (*CreateUserRes, error) {
 
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
@@ -67,7 +73,7 @@ func (s *Service) Create(ctx context.Context, req *CreateUserReq) (*CreateUserRe
 		Username: u.Username,
 	}, nil
 }
-func (s *Service) Login(ctx context.Context, req *LogingUserReq) (*LogingUserRes, error) {
+func (s *service) Login(ctx context.Context, req *LogingUserReq) (*LogingUserRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, s.timeout)
 	defer cancel()
 
@@ -84,7 +90,7 @@ func (s *Service) Login(ctx context.Context, req *LogingUserReq) (*LogingUserRes
 		Username: u.Username,
 		RegisteredClaims: jwt.RegisteredClaims{
 			Issuer:    u.ID,
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
 		},
 	})
 	signedString, err := token.SignedString([]byte(sekretKey))
@@ -95,6 +101,5 @@ func (s *Service) Login(ctx context.Context, req *LogingUserReq) (*LogingUserRes
 	return &LogingUserRes{
 		AccessToken: signedString,
 		Username:    u.Username,
-		ID:          u.ID,
 	}, nil
 }

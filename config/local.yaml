@@ -3,10 +3,12 @@ environment: local #local, dev, prod
 is_debug: true 
 log_level: debug #debug, info, warn, error, fatal, panic
 router: httprouter #fiber or httprouter //TODO
+
 listen:
   type: port #Use 'port' for TCP or 'socket' for UNIX Socket(no need ip & port values)
   bind_ip: localhost
   port: 9090
+
 mongodb:
   host: localhost
   port: 27017
@@ -15,6 +17,29 @@ mongodb:
   auth_db: 
   password:
   collections: users
-igdb:
-  id: 3gxhhs1v5apwcghfssdggedxppfcof
-  token: a3wxn359hc3ioxdb9byhywix165avl
+
+game_search :
+  extenstions: 
+    - nsp
+    - exe 
+    - x86_64
+  directories: 
+    - '/home/vitalii/.PP/GAMES'
+    - '/home/vitalii/.native/Nintendo games'
+    - '/home/vitalii/.local/share/Steam/steamapps/common'
+  names_to_compare:
+  - 'Red Dead Redemption 2'
+  - 'Elden Ring'
+  - 'The Witcher 3: Wild Hunt'
+  - 'Project Zomboid'
+
+
+igbd:
+ id: 3gxhhs1v5apwcghfssdggedxppfcof
+ token: 49vfrq4ynw40eyw6g7vx2fszscll3f
+
+certificates:
+ cert: /cert/l-cert.pem
+ key:  /cert/l-key.pem
+  
+

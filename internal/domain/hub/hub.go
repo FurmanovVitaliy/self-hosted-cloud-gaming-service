@@ -1,53 +1,65 @@
 package hub
 
+import (
+	"fmt"
+)
+
+type Message struct {
+	RoomUUID    string `json:"room_uuid"`
+	Username    string `json:"username"`
+	ContentType string `json:"content_type"`
+	Content     string `json:"content"`
+}
+
 type Hub struct {
-	Rooms map[string]*Room
-	///Register   chan *Peer
-	//Unregister chan *Peer
-	//Broadcast  chan *Message
+	Rooms            map[string]*Room
+	Broadcast        chan *Message
+	ConnectPlayer    chan *Worker
+	DisconnectPlayer chan *Worker
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		Rooms: make(map[string]*Room),
-		//Register:   make(chan *Peer),
-		//Unregister: make(chan *Peer),
-		//Broadcast:  make(chan *Message),
+		Rooms:            make(map[string]*Room),
+		Broadcast:        make(chan *Message),
+		ConnectPlayer:    make(chan *Worker),
+		DisconnectPlayer: make(chan *Worker),
 	}
 }
 
-/*func (h *Hub) Run() {
+func (h *Hub) Run() {
 	for {
 		select {
-		case peer := <-h.Register:
-			if _, ok := h.Rooms[peer.RoomID]; ok {
-				r := h.Rooms[peer.RoomID]
-				if _, ok := r.Peers[peer.ID]; !ok {
-					r.Peers[peer.ID] = peer
+		case worker := <-h.ConnectPlayer:
+			if _, ok := h.Rooms[worker.roomUUID]; ok {
+				room := h.Rooms[worker.roomUUID]
+				if _, ok := room.Workers[worker.username]; !ok {
+					room.Workers[worker.username] = worker
 				}
 			}
-		case peer := <-h.Unregister:
-			if _, ok := h.Rooms[peer.RoomID]; ok {
-				if _, ok := h.Rooms[peer.RoomID].Peers[peer.ID]; ok {
-					//send info that client left he room
-					delete(h.Rooms[peer.RoomID].Peers, peer.ID)
-					close(peer.Message)
-				}
-			}
-
-		case message := <-h.Broadcast:
-			if _, ok := h.Rooms[message.RoomID]; ok {
-				r := h.Rooms[message.RoomID]
-				for _, peer := range r.Peers {
-					select {
-					case peer.Message <- message:
-					default:
-						close(peer.Message)
-						delete(r.Peers, peer.ID)
+		case worker := <-h.DisconnectPlayer:
+			if _, ok := h.Rooms[worker.roomUUID]; ok {
+				if _, ok := h.Rooms[worker.roomUUID].Workers[worker.username]; ok {
+					if len(h.Rooms[worker.roomUUID].Workers) != 0 {
+						h.Broadcast <- &Message{
+							RoomUUID:    worker.roomUUID,
+							Username:    worker.username,
+							ContentType: "broadcast",
+							Content:     fmt.Sprintf("%s left the room", worker.username),
+						}
+						delete(h.Rooms[worker.roomUUID].Workers, worker.username)
+						close(worker.RegMes)
 					}
 				}
 			}
+		case message := <-h.Broadcast:
+			if _, ok := h.Rooms[message.RoomUUID]; ok {
+				for _, worker := range h.Rooms[message.RoomUUID].Workers {
+					worker.RegMes <- *message
+
+				}
+			}
+
 		}
 	}
 }
-*/

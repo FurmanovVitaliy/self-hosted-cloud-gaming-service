@@ -23,6 +23,7 @@ require (
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/Henry-Sarabia/apicalypse v1.0.2 // indirect
 	github.com/Henry-Sarabia/blank v3.0.0+incompatible // indirect
+	github.com/Henry-Sarabia/igdb v1.0.3
 	github.com/Henry-Sarabia/sliceconv v1.0.2 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/snappy v0.0.1 // indirect

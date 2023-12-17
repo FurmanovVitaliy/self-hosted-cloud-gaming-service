@@ -1,6 +1,0 @@
-package websocket
-
-const (
-	WEBRTC_ANSWER    = "WEBRTC_ANSWER"
-	WEBRTC_CANDIDATE = "WEBRTC_CANDIDATE"
-)

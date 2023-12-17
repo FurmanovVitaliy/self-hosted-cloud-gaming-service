@@ -35,7 +35,7 @@ export class WebRTC {
       this.dataChannel = e.channel;
       this.dataChannel.onopen = () => {
         log.debug("[rtc] the input channel has been opened");
-        notification.broadcast(constants.event.RTC_INPUT_READY,this.dataChannel.send.bind(this.dataChannel));
+        notification.broadcast(constants.RTC_EVENT.RTC_INPUT_READY,this.dataChannel.send.bind(this.dataChannel));
       };
       this.dataChannel.onerror = (e) => {
         log.error("[rtc] the input channel has been closed", e);
@@ -48,7 +48,7 @@ export class WebRTC {
       log.info(`[rtc] State: ${this.conn.iceConnectionState}`);
       switch (this.conn.iceConnectionState) {
         case "connected":
-          notification.broadcast(constants.event.RTC_CONNECTION_READY);
+          notification.broadcast(constants.RTC_EVENT.RTC_CONNECTION_READY,constants.RTC_SIGNAL.CONNECTION_READY)
           break;
           case "disconnected":
             case "failed":
@@ -75,14 +75,16 @@ export class WebRTC {
       this.#setSDP(offer);
     }
   async #setSDP(offer) {
-    await this.conn.setRemoteDescription(offer).catch((e) => {
-      log.error("[rtc] setRemoteDescription", e);
-    });
-    log.info("[rtc] Remote description has been seted");
+    await this.conn
+      .setRemoteDescription(offer)
+      .then(()=>log.info("[rtc] Remote description has been seted"))
+      .catch((e) => {
+        log.error("[rtc] setRemoteDescription", e);
+      });
     const answer = await this.conn.createAnswer();
     await this.conn.setLocalDescription(answer).then(() => {
       log.info("[rtc] Local description has been seted");
-      notification.broadcast(constants.event.RTC_SDP_ANSWER_CREATED,answer);
+      notification.broadcast(constants.RTC_EVENT.RTC_SDP_ANSWER_CREATED,answer);
     }
     );
   }
@@ -94,7 +96,7 @@ export class WebRTC {
 
   #sendCandidtes =  () => {
     this.localCandidates.forEach((candidate) => {
-      notification.broadcast(constants.event.RTC_ICE_CANDIDATE_FOUND, candidate);
+      notification.broadcast(constants.RTC_EVENT.RTC_ICE_CANDIDATE_FOUND, candidate);
     });
   }
   stop() {

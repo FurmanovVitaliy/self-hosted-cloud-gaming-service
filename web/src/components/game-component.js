@@ -10,7 +10,7 @@ class GameComponent extends HTMLElement {
 
         const poster = document.createElement('div')
         poster.setAttribute('class', 'game-poster')
-
+      
         const name = document.createElement('div')
         name.setAttribute('class', 'game-name')
         const button = document.createElement('button')
@@ -64,15 +64,15 @@ class GameComponent extends HTMLElement {
 
     createRoom(){
         const shadow = this.shadowRoot;
-        const gameTitle = shadow.querySelector('.game-name').textContent
+        const gameID = shadow.querySelector('.game-name').getAttribute('game-id')
         const button = shadow.querySelector('.create-room-button')
         const uuid = uuidv4();
         button.addEventListener('click', () => {
-            createRoom(uuid,gameTitle,{}).then((res) => {
+            createRoom(uuid,gameID,{}).then((res) => {
             navigateTo('/rooms/' + uuid)
             })
         
         })
     }
 }
-customElements.define('game-title', GameComponent )
+customElements.define('game-component', GameComponent )

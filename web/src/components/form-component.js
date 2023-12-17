@@ -3,11 +3,10 @@ import { authApi } from "../api";
 
 class FakeForm extends HTMLElement {
   constructor() {
-
     super();
-    const shadow = this.attachShadow({ mode: 'open' });
-    const wrapper = document.createElement('div')
-    wrapper.setAttribute('class', 'form-block');
+    const shadow = this.attachShadow({ mode: "open" });
+    const wrapper = document.createElement("div");
+    wrapper.setAttribute("class", "form-block");
     wrapper.innerHTML = `
     <div class="form">
       <h4 class="title"></h4>
@@ -18,10 +17,9 @@ class FakeForm extends HTMLElement {
           <button class='cancel-button'>Cancel</button>
       </div>
     </div>
-    `
+    `;
 
-
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.textContent = `
     .wrapper{
       width: 100%;
@@ -51,64 +49,43 @@ class FakeForm extends HTMLElement {
     input{
       margin-bottom: 5px;
     }
-    `
+    `;
 
     shadow.appendChild(style);
     shadow.appendChild(wrapper);
-
   }
 
   connectedCallback() {
-
     const shadow = this.shadowRoot;
-  
 
-    const wrapper = shadow.querySelector('.form-block')
-    const title = shadow.querySelector('.title')
+    const wrapper = shadow.querySelector(".form-block");
+    const title = shadow.querySelector(".title");
 
-    const okButton = shadow.querySelector('.ok-button')
-    const cancelButton = shadow.querySelector('.cancel-button')
+    const okButton = shadow.querySelector(".ok-button");
+    const cancelButton = shadow.querySelector(".cancel-button");
 
-    const inputText = shadow.querySelector('.input-text')
-    const inputPassword = shadow.querySelector('.input-password')
+    const inputText = shadow.querySelector(".input-text");
+    const inputPassword = shadow.querySelector(".input-password");
 
-    okButton.addEventListener('click', (e) => {
- 
-        if (inputText && inputPassword){
-            authApi.login(inputText.value,inputPassword.value).then((response) => {
-              console.log(response.headers)
-              //(response.headers.get('Set-Cookie')) ? log.debug("Coockie present in response") : log.debug("Coockie not present in response")
-                //console.bebug(response)
-                response.json().then((data) => {
-                    console.log(data)
-                    if (data){
-                        console.log("Auth OK")
-                        //localStorage.setItem('token', data.token)
-                        //localStorage.setItem('user', data.user)
-                        window.location.href = '/games'
-                    }
-                })
-            })
-        }
+    okButton.addEventListener("click", (e) => {
+      if (inputText && inputPassword) {
+        authApi.login(inputText.value, inputPassword.value).then((response) => {
+          response.json().then((data) => {
+            if (data) {
+              log.info("Auth OK");
+              localStorage.setItem("username", data.username);
+              localStorage.setItem("userId", data.id);
+              window.location.href = "/games";
+            }
+          });
+        });
+      }
+    });
 
-    })
-
-    cancelButton.addEventListener('click', (e) => {
-        console.log("Auth Canceled")
-
-    })
-    }
-
-authWithLoginAndPassword(){
-    login = shadow.querySelector('.input-text');
-    password = shadow.querySelector('.input-password');
-    if (login && password){
-        authApi.login(login,password).then((response) => {
-          
-            console.log(response)
-        })
-    }
-}
+    cancelButton.addEventListener("click", (e) => {
+      log.warn("Auth Canceled");
+    });
+  }
 }
 customElements.define('login-form', FakeForm)
 

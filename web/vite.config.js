@@ -14,7 +14,7 @@ export default defineConfig({
         hmr: true,
         https: {
             key: '../cert/l-key.pem',
-            cert: '../cert/l.pem',
+            cert: '../cert/l-cert.pem',
         }
     },
     plugins: [

@@ -2,67 +2,75 @@ package controller
 
 import (
 	"cloud/config"
-	gamehandler "cloud/internal/adapters/api/handlers/games"
-	hubhandler "cloud/internal/adapters/api/handlers/hub"
-	userhandler "cloud/internal/adapters/api/handlers/user"
+	"time"
+
+	"cloud/internal/api/handlers"
 	"cloud/internal/domain/games"
+	"cloud/internal/domain/games/library"
 	"cloud/internal/domain/hub"
 	"cloud/internal/domain/user"
 	"cloud/pkg/client"
 	"cloud/pkg/logger"
 	"context"
 	"net/http"
-	"time"
 
 	"github.com/julienschmidt/httprouter"
 	"github.com/rs/cors"
 )
 
 type Controller struct {
-	logger *logger.Logger
-	config *config.Config
+	logger   *logger.Logger
+	config   *config.Config
+	hub      *hub.Hub
+	handlers [3]handlers.Handler
+	doneChan chan struct{}
 }
 
 func NewController(config *config.Config, logger *logger.Logger) (*Controller, error) {
-
-	http.Handle("/", fileServer("/home/vitalii/dev/go-code/fileSearch/web/build"))
-
 	return &Controller{
-		logger: logger,
-		config: config,
+		doneChan: make(chan struct{}),
+		logger:   logger,
+		config:   config,
 	}, nil
 }
+
 func (c *Controller) Run() {
+	c.servicesInition()
+	go c.hub.Run()
 	go c.startHttpServer()
-	go c.connectToDB()
-	//c.startServices()
-	//c.scanLib()
-	//c.starHandlingUsers()
+	<-c.doneChan
 }
 
 func (c *Controller) Stop() {
-	//c.stopServices()
+	close(c.doneChan)
 }
 
-func (c *Controller) connectToDB() {
-
+func (c *Controller) servicesInition() {
 	cfg := c.config.MongoDb
 	dbConn, err := client.NewClient(context.Background(), cfg.Host, cfg.Port, cfg.Username, cfg.Password, cfg.Database, cfg.AuthDB)
 	if err != nil {
 		c.logger.Fatalf("Failed to connect to DB due to error: %s", err)
 	}
 	c.logger.Info("Connected to DB")
-	userStorage := user.NewStorage(dbConn, "users", c.logger)
-	userService := user.NewService(userStorage, c.logger)
-	userHandler := userhandler.NewHandler(userService, c.logger)
 
-	gamesStorage := games.NewStorage(dbConn, "games", c.logger)
-	gamesService := games.NewService(gamesStorage)
-	gamesHandler := gamehandler.NewHandler(gamesService)
+	uStorage := user.NewStorage(dbConn, "users", c.logger)
+	uSetvice := user.NewService(uStorage, c.logger)
 
-	//!!hub must be in controller
-	hub := hub.NewHub()
-	hubHandler := hubhandler.NewHandler(hub)
+	gStorage := games.NewStorage(dbConn, "games", c.logger)
+	//gStorage.FullyUpdate(context.Background(), c.scanLib())
+	gService := games.NewService(gStorage)
+
+	c.hub = hub.NewHub()
+
+	c.handlers[0] = user.Handler(uSetvice, c.logger)
+	c.handlers[1] = games.Handler(gService)
+	c.handlers[2] = hub.Handler(c.hub, c.logger, gService)
+}
+
+func (c *Controller) startHttpServer() {
+	certFile := c.config.Workdir + c.config.Certificate.Cert
+	keyFile := c.config.Workdir + c.config.Certificate.Key
+
 	cors := cors.New(cors.Options{
 		AllowedMethods:   []string{"GET", "POST"},
 		AllowedOrigins:   []string{"https://localhost:3000", "https://192.168.1.13:3000"},
@@ -72,40 +80,35 @@ func (c *Controller) connectToDB() {
 	})
 
 	router := httprouter.New()
-	userHandler.Register(router)
-	hubHandler.Register(router)
-	gamesHandler.Register(router)
-	//go hub.Run()
-	certFile := "/home/vitalii/dev/go-code/fileSearch/cert/l.pem"
-	keyFile := "/home/vitalii/dev/go-code/fileSearch/cert/l-key.pem"
-	http.ListenAndServeTLS(":8000", certFile, keyFile, cors.Handler(router))
 
-}
-
-func (c *Controller) startHttpServer() {
-	certFile := "/home/vitalii/dev/go-code/fileSearch/cert/l.crt"
-	keyFile := "/home/vitalii/dev/go-code/fileSearch/cert/l.key"
-	cors := cors.New(cors.Options{
-		AllowedMethods:   []string{"GET", "POST"},
-		AllowedOrigins:   []string{"https://localhost:3000", "https://192.168.1.13:3000"},
-		AllowedHeaders:   []string{"*"},
-		AllowCredentials: true,
-		Debug:            true,
-	})
-
-	handler := cors.Handler(http.DefaultServeMux)
+	for _, handler := range c.handlers {
+		handler.Register(router)
+	}
 
 	httpServer := http.Server{
-		Handler:      handler,
-		Addr:         ":8080", //TODO: from config
+		Handler:      cors.Handler(router),
+		Addr:         ":8000", //TODO: move to config
 		IdleTimeout:  120 * time.Second,
 		ReadTimeout:  500 * time.Second,
 		WriteTimeout: 500 * time.Second,
 	}
 
-	c.logger.Info("HTTP server starting on port 8080")
+	c.logger.Infof("HTTP server starting on port %s", httpServer.Addr)
 	httpServer.ListenAndServeTLS(certFile, keyFile)
 
 }
-
-func fileServer(dir string) http.Handler { return http.FileServer(http.Dir(dir)) }
+func (c *Controller) scanLib() []games.Game {
+	serchCfg := c.config.GameSearch
+	igbdCfg := c.config.IGBD
+	search := library.NewSerchEngine(serchCfg.FileExtenstions, serchCfg.Directories, serchCfg.NamesToCompare, igbdCfg.ID, igbdCfg.Token, c.logger)
+	g, err := search.ScanLibrary()
+	if err != nil {
+		c.logger.Error(err)
+	}
+	g, err = search.GetInfoFromIGDB(g)
+	if err != nil {
+		c.logger.Error(err)
+		return g
+	}
+	return g
+}

@@ -2,7 +2,6 @@ package main
 
 import (
 	"cloud/cmd/controller"
-	"cloud/cmd/worker"
 	"cloud/config"
 	"cloud/pkg/logger"
 
@@ -21,14 +20,4 @@ func main() {
 	}
 	logger.Info("Controller starting")
 	controller.Run()
-
-	//Worker
-	worker, err := worker.NewWorker(config, &logger)
-	if err != nil {
-		logger.Fatal(err)
-	}
-
-	logger.Info("Worker starting")
-	worker.Run()
-
 }

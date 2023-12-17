@@ -4,6 +4,8 @@ import notification from "../common/notification";
 import log from "../common/log";
 import { startUpdatingGamepadState } from "../common/input";
 import { stopUpdatingGamepadState } from "../common/input";
+import {collectDeviceInfo} from "../common/devinfo";
+import {msg} from "../common/network/msg";
 
 class RoomDisplay extends HTMLElement {
   constructor() {
@@ -14,7 +16,7 @@ class RoomDisplay extends HTMLElement {
     display.setAttribute("class", "main-display");
     display.setAttribute("autoplay", true);
     display.setAttribute("playsinline", true);
-    if (display.requestFullscreen) {
+   /* if (display.requestFullscreen) {
       display.requestFullscreen();
     } else if (display.webkitRequestFullscreen) {
       display.webkitRequestFullscreen();
@@ -24,7 +26,7 @@ class RoomDisplay extends HTMLElement {
       display.msRequestFullscreen();
     }
 
-
+*/
     this.webrtc = new WebRtc(display);
     this.socket = null;
 
@@ -54,13 +56,11 @@ class RoomDisplay extends HTMLElement {
       stopUpdatingGamepadState;
       this.webrtc.stop();
       this.socket.close();
-      this.socket = null;
-      this.webrtc = null;
     });
 
     this.upgardeConnection();
     notification.execute(
-      constants.event.RTC_INPUT_READY,
+      constants.RTC_EVENT.RTC_INPUT_READY,
       startUpdatingGamepadState,
       true
     );
@@ -70,53 +70,65 @@ class RoomDisplay extends HTMLElement {
     const uuid = url.split("/")[2];
 
     this.socket = new WebSocket(
-      `wss://${constants.SERVER_IP}/room/join/${uuid}?username=lock`
+      `wss://${
+        constants.SERVER_IP
+      }/room/join/${uuid}?username=${localStorage.getItem("username")}`
     );
-    //notification.execute(constants.event.RTC_CONNECTION_READY,this.socket.close ,true);
+    
 
     this.socket.onopen = () => {
       log.info("[ws] Socket is open");
-      this.socket.send(JSON.stringify({ signal: "Client is ready" }));
+      this.socket.send(msg("deviceInfo",collectDeviceInfo()));
+      log.info("[ws]->Device info sent");
+      notification.execute(constants.RTC_EVENT.RTC_CONNECTION_READY,
+        (signal) => {
+        this.socket.send(msg(constants.RTC_ENTITY_NAME.SIGNAL, signal));
+        log.info(`[ws]->WS closure signal was sent`);
+      },
+      true
+      );
     };
 
     notification.execute(
-      constants.event.RTC_SDP_ANSWER_CREATED,
+      constants.RTC_EVENT.RTC_SDP_ANSWER_CREATED,
       (answer) => {
-        this.socket.send(JSON.stringify(answer));
-        log.info(`[ws]->Answer was send`);
+        this.socket.send(msg(constants.RTC_ENTITY_NAME.ANSWER, answer));
+        log.info(`[ws]->Answer was sent`);
       },
       true
     );
 
     notification.execute(
-      constants.event.RTC_ICE_CANDIDATE_FOUND,
+      constants.RTC_EVENT.RTC_ICE_CANDIDATE_FOUND,
       (candidate) => {
-        this.socket.send(JSON.stringify(candidate));
+        this.socket.send(
+          msg(constants.RTC_ENTITY_NAME.CLIENT_CANDIDATE, candidate)
+        );
         log.info(`[ws]->Candidate was send`);
       }
     );
 
     this.socket.onmessage = (e) => {
       const data = JSON.parse(e.data);
-      switch (true) {
-        case data.hasOwnProperty("sdp"):
+      switch (data.content_type) {
+        case constants.RTC_ENTITY_NAME.OFFER:
           log.info("[ws] <- Offer received");
-          this.webrtc.init(data);
+          this.webrtc.init(JSON.parse(atob(data.content)));
           break;
-        case data.hasOwnProperty("candidate"):
-          log.debug(`[ws] <- Candidate received : ${JSON.stringify(data)}`);
-
-          this.webrtc.remoteCandidates.push(data);
+        case constants.RTC_ENTITY_NAME.SERVER_CANDIDATE:
+          log.debug(`[ws] <- Candidate received : ${atob(data.content)}`);
+          this.webrtc.remoteCandidates.push(JSON.parse(atob(data.content)));
           break;
-        case data.hasOwnProperty("signal"):
-          if (data.signal === "Server ICE gathering is complete") {
-            log.info("[ws] <- Ready signal received");
+        case constants.RTC_ENTITY_NAME.SIGNAL:
+          if (data.content === constants.RTC_SIGNAL.SERVER_ICE_GATHERING_COMPLETE) {
+            log.info("[ws] <- Server ICE ready signal received");
             this.webrtc.addice();
           }
           break;
         default:
           log.warn("[ws] <- Unknown message received");
-          log.warn(JSON.stringify(e.data));
+          log.warn(JSON.stringify(data));
+          
           break;
       }
     };

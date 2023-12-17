@@ -85,12 +85,15 @@ class LibraryComponent extends HTMLElement {
         const sliderBack = document.querySelector('.slider_bg .swiper-wrapper');
         getGames().then((games) => {
             games.forEach((game) => {
-                const slide = document.createElement('game-title');
+                const slide = document.createElement('game-component');
                 slide.setAttribute('class', 'swiper-slide slide')
                 const poster = slide.shadowRoot.querySelector('.game-poster');
                 poster.setAttribute('style', `background-image: url(${game.logo})`);
                 const name = slide.shadowRoot.querySelector('.game-name');
                 name.appendChild(document.createTextNode(game.name));
+                name.setAttribute('game-id', game.id);
+              
+             
 
                 slider.appendChild(slide);  
             });
@@ -103,6 +106,7 @@ class LibraryComponent extends HTMLElement {
                 poster.setAttribute('data-swiper-parallax', '100');
                 poster.setAttribute('class', 'game-poster');
                 poster.setAttribute('style', `background-image: url(${game.logo})`);
+
                 sliderBack.appendChild(slide);
         
 

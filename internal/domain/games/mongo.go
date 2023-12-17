@@ -24,13 +24,11 @@ func NewStorage(database *mongo.Database, collection string, logger *logger.Logg
 }
 
 func (d *db) Create(ctx context.Context, gt Game) (string, error) {
-	d.logger.Debug("create game title")
 	result, err := d.collection.InsertOne(ctx, gt)
 	if err != nil {
 		return "", fmt.Errorf("failed to create game title due to error:%v", err)
 	}
 
-	d.logger.Debug("convert InsertedID to ObjectID")
 	oid, ok := result.InsertedID.(primitive.ObjectID)
 	if ok {
 		return oid.Hex(), nil
@@ -67,6 +65,20 @@ func (d *db) FindOne(ctx context.Context, id string) (g Game, err error) {
 	}
 	return g, nil
 }
+func (d *db) FindOneByName(ctx context.Context, name string) (g Game, err error) {
+	filter := bson.M{"name": name}
+	result := d.collection.FindOne(ctx, filter)
+	if result.Err() != nil {
+		if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+			return g, err
+		}
+		return g, fmt.Errorf("failed to find game title by name:%s due to error:%v", name, err)
+	}
+	if err := result.Decode(&g); err != nil {
+		return g, fmt.Errorf("failed to decode game title from Db with name:%s", name)
+	}
+	return g, nil
+}
 func (d *db) Update(ctx context.Context, g Game) error {
 	oid, err := primitive.ObjectIDFromHex(g.ID)
 	if err != nil {
@@ -98,6 +110,15 @@ func (d *db) Update(ctx context.Context, g Game) error {
 	d.logger.Tracef("Matched %d document(s) and modified %d document(s)", result.MatchedCount, result.MatchedCount)
 	return nil
 }
+func (d *db) FullyUpdate(ctx context.Context, games []Game) error {
+	d.Drop(ctx)
+	for _, g := range games {
+		if _, err := d.Create(ctx, g); err != nil {
+			return fmt.Errorf("failed to create game title due to error:%v", err)
+		}
+	}
+	return nil
+}
 func (d *db) Delete(ctx context.Context, id string) error {
 	oid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -115,5 +136,11 @@ func (d *db) Delete(ctx context.Context, id string) error {
 		return fmt.Errorf("not found")
 	}
 	d.logger.Tracef("Dleted %d document(s) ", result.DeletedCount)
+	return nil
+}
+func (d *db) Drop(ctx context.Context) error {
+	if err := d.collection.Drop(ctx); err != nil {
+		return fmt.Errorf("failed to drop game title collection due to error:%v", err)
+	}
 	return nil
 }

@@ -1,12 +1,10 @@
 package user
 
 import (
-	"cloud/internal/adapters/api/handlers"
+	"cloud/internal/api/handlers"
 	"cloud/internal/apperror"
-	"cloud/internal/domain/user"
 	"cloud/pkg/logger"
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/julienschmidt/httprouter"
@@ -24,14 +22,14 @@ const (
 )
 
 type handler struct {
-	service *user.Service
-	logger  *logger.Logger
+	UserService Service
+	logger      *logger.Logger
 }
 
-func NewHandler(service *user.Service, logger *logger.Logger) handlers.Handler {
+func Handler(UserService Service, logger *logger.Logger) handlers.Handler {
 	return &handler{
-		service: service,
-		logger:  logger,
+		UserService: UserService,
+		logger:      logger,
 	}
 
 }
@@ -47,7 +45,7 @@ func (h *handler) Register(router *httprouter.Router) {
 	//router.HandlerFunc(http.MethodDelete, userURL, apperror.Middleware(h.DeleteUser))
 }
 func (h *handler) GetList(w http.ResponseWriter, r *http.Request) error {
-	users, err := h.service.GetList(r.Context())
+	users, err := h.UserService.GetList(r.Context())
 	if err != nil {
 		return err
 	}
@@ -56,13 +54,14 @@ func (h *handler) GetList(w http.ResponseWriter, r *http.Request) error {
 	json.NewEncoder(w).Encode(users)
 	return nil
 }
+
 func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) error {
-	var req user.CreateUserReq
+	var req CreateUserReq
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
 		return err
 	}
-	res, err := h.service.Create(r.Context(), &req)
+	res, err := h.UserService.Create(r.Context(), &req)
 	if err != nil {
 		return err
 	}
@@ -73,15 +72,14 @@ func (h *handler) CreateUser(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 func (h *handler) Login(w http.ResponseWriter, r *http.Request) error {
-	var user user.LogingUserReq
+	var user LogingUserReq
 	decoder := json.NewDecoder(r.Body)
 
 	if err := decoder.Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
-	fmt.Println(user)
-	u, err := h.service.Login(r.Context(), &user)
+	u, err := h.UserService.Login(r.Context(), &user)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
@@ -100,7 +98,7 @@ func (h *handler) Login(w http.ResponseWriter, r *http.Request) error {
 	http.SetCookie(w, cookie)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(user)
+	json.NewEncoder(w).Encode(u)
 	return nil
 }
 
