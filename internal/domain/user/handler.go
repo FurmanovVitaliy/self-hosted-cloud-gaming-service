@@ -2,7 +2,7 @@ package user
 
 import (
 	"cloud/internal/api/handlers"
-	"cloud/internal/apperror"
+	"cloud/internal/messages"
 	"cloud/pkg/logger"
 	"encoding/json"
 	"net/http"
@@ -35,11 +35,11 @@ func Handler(UserService Service, logger *logger.Logger) handlers.Handler {
 }
 
 func (h *handler) Register(router *httprouter.Router) {
-	router.HandlerFunc(http.MethodGet, usersURL, apperror.Middleware(h.GetList))
+	router.HandlerFunc(http.MethodGet, usersURL, messages.Middleware(h.GetList))
 	//router.HandlerFunc(http.MethodGet, userURL, apperror.Middleware(h.GetUserByUUID))
-	router.HandlerFunc(http.MethodPost, singupURL, apperror.Middleware(h.CreateUser))
-	router.HandlerFunc(http.MethodPost, loginURL, apperror.Middleware(h.Login))
-	router.HandlerFunc(http.MethodGet, logoutURL, apperror.Middleware(h.Logout))
+	router.HandlerFunc(http.MethodPost, singupURL, messages.Middleware(h.CreateUser))
+	router.HandlerFunc(http.MethodPost, loginURL, messages.Middleware(h.Login))
+	router.HandlerFunc(http.MethodGet, logoutURL, messages.Middleware(h.Logout))
 	//router.HandlerFunc(http.MethodPut, userURL, apperror.Middleware(h.UpdateUser))
 	//router.HandlerFunc(http.MethodPatch, userURL, apperror.Middleware(h.PartiallyUpdateUser))
 	//router.HandlerFunc(http.MethodDelete, userURL, apperror.Middleware(h.DeleteUser))

@@ -2,11 +2,14 @@ package hub
 
 import (
 	"cloud/internal/domain/games"
+	"cloud/internal/messages"
 	"cloud/pkg/input/keymapping"
 	"cloud/pkg/logger"
 	"cloud/pkg/network/webrtc"
 	"encoding/json"
-	"os"
+	"fmt"
+	"math/rand"
+	"net"
 	"os/exec"
 	"strconv"
 
@@ -29,113 +32,183 @@ type PlayerDevice struct {
 type Worker struct {
 	username                string
 	roomUUID                string
-	RegMes                  chan Message
-	ErrMes                  chan error
+	Message                 chan messages.Message
+	ErrMes                  chan messages.AppError
 	logger                  *logger.Logger
 	websocket               WsManager
-	webrtc                  *webrtc.WRTC
+	webrtc                  webrtc.WRTC
 	game                    games.Game
-	PlayerDevice            PlayerDevice
+	playerDevice            PlayerDevice
 	virtualDeviceKeymapping keymapping.XboxGpadInput
 	virtualDevice           uinput.Gamepad
-	appPid                  int
-	capturePid              int
+	externalProces          [2]*exec.Cmd
+	listener                *net.UDPConn
 }
 
 func (w *Worker) Run(h *Hub) {
-	go w.handleErrorMes(h)
-	go w.handleIncomeMes(h)
-	w.webrtc.Start("h264", "opus", w.websocket.WriteJSON)
-	w.runGame()
-	w.runCapture()
-	w.configureVirtualDevice()
-	go w.webrtc.SendVideo("127.0.0.1", 5004)
-	w.webrtc.OnMessage = w.handleInput
+	w.recovering()
+	go w.hendleMessages(h)
+	go w.hansleWsMes()
+	w.webrtc.Start("h264", "opus")
+
+}
+func (w *Worker) Stop(h *Hub) {
+	w.logger.Warn("closing listener of worker " + w.username)
+	if w.listener != nil {
+		w.listener.Close()
+	}
+	w.logger.Warn("stopping virtual device of worker " + w.username)
+	if w.virtualDevice != nil {
+		w.virtualDevice.Close()
+	}
+	w.logger.Warn("stopping webrtc of worker " + w.username)
+	if !w.webrtc.IsClosed {
+		w.webrtc.Stop()
+	}
+	w.logger.Warn("stopping workerof worker " + w.username)
+	if h != nil {
+		h.DisconnectPlayer <- w
+	}
+	w.logger.Warn("killingexternal processesof worker " + w.username)
+	for _, cmd := range w.externalProces {
+		if cmd != nil {
+			w.logger.Info("kill process" + cmd.String())
+			cmd.Process.Kill()
+		}
+	}
+
+	w.logger.Infof("worker %s stopped", w.username)
 }
 
-func (w *Worker) handleIncomeMes(*Hub) {
-	defer w.websocket.Close()
-	defer w.logger.Info("ws closed")
-readingWsMes:
+func (w *Worker) hendleMessages(h *Hub) {
+	defer w.recovering()
+	defer w.logger.Infof("message handler closed for %s worker", w.username)
+	defer w.logger.Infof("error handler closed for %s worker", w.username)
+	defer w.Stop(h)
+hendleMessages:
 	for {
-		msg, err := w.websocket.ReadMessage()
-		if err != nil {
-			w.ErrMes <- err
-			return
-		}
-		switch msg.ContentType {
-		case webrtc.ANSWER:
-			err = w.webrtc.SetAnswer(msg.Content)
-			if err != nil {
-				w.ErrMes <- err
-				return
+		select {
+		case msg := <-w.Message:
+			switch msg.ContentType {
+			case messages.RTC_OFFER:
+				w.websocket.WriteJSON(msg)
+			case messages.RTC_SERVER_CANDIDATE:
+				w.websocket.WriteJSON(msg)
+			case messages.RTC_SIGNAL:
+				if msg.Content == messages.RtcIceGatheringComplete {
+					w.websocket.WriteJSON(msg)
+				}
+				if msg == *messages.RtcConnectionClosed {
+					w.logger.Warn("webrtc connection closed")
+					break hendleMessages
+				}
 			}
-		case webrtc.CLIENT_CANDIDATE:
-			err = w.webrtc.AddCandidate(msg.Content)
-			if err != nil {
-				w.ErrMes <- err
-				return
-			}
-		case webrtc.SIGNAL:
-			if msg.Content == webrtc.CONNECTION_READY {
-				break readingWsMes
-			}
-		case "deviceInfo":
-			webrtc.Decode(msg.Content, &w.PlayerDevice)
+		case err := <-w.ErrMes:
+			w.logger.Error(err)
+			break hendleMessages
 		}
 	}
 }
 
-func (w *Worker) handleErrorMes(h *Hub) {
-	defer w.logger.Infof("error handler closed for %s worker", w.username)
-	for err := range w.ErrMes {
-		w.logger.Error(err)
-		w.logger.Infof("%s worker disconnected", w.username)
-		w.websocket.Close()
-		w.webrtc.Stop()
-		app, err := os.FindProcess(w.appPid)
-		if err == nil {
-			app.Kill()
+func (w *Worker) hansleWsMes() {
+	defer w.recovering()
+	defer w.websocket.Close()
+	defer w.logger.Info("ws closed")
+readingWsMes:
+	for {
+		msg := w.websocket.ReadMessage()
+		switch msg.ContentType {
+		case messages.RTC_ANSWER:
+			w.webrtc.SetAnswer(msg.Content)
+		case messages.RTC_CLIENT_CANDIDATE:
+			w.webrtc.AddCandidate(msg.Content)
+		case messages.RTC_SIGNAL:
+
+			if msg.Content == "interrupt" {
+				w.logger.Warn("interrupt signal received")
+				w.webrtc.Stop()
+				break readingWsMes
+			}
+			if msg.Content == messages.RtcConnectionReady {
+				//w.runGame()
+				go w.runCapture()
+				break readingWsMes
+			}
+		case "deviceInfo":
+			webrtc.Decode(msg.Content, &w.playerDevice)
+			w.configureVirtualDevice()
+			w.webrtc.OnMessage = w.handleInput
 		}
-		capture, err := os.FindProcess(w.capturePid)
-		if err == nil {
-			capture.Kill()
-		}
-		h.DisconnectPlayer <- w
-		h.Broadcast <- &Message{
-			RoomUUID:    w.roomUUID,
-			Username:    w.username,
-			ContentType: "broadcast",
-			Content:     w.username + " left the room",
-		}
-		return
 	}
 }
 
 func (w *Worker) runGame() {
 	protonePath := "/home/vitalii/.PP/PortProton/data/scripts/start.sh"
 	cmd := exec.Command(protonePath, w.game.Path)
+	w.externalProces[0] = cmd
 	err := cmd.Start()
 	if err != nil {
-		w.ErrMes <- err
+		w.ErrMes <- *messages.ErrStartGame
 	}
-	w.appPid = cmd.Process.Pid
 }
+
 func (w *Worker) runCapture() {
+	defer w.recovering()
+	defer func() {
+		if w.listener != nil {
+			w.listener.Close()
+		}
+	}()
+
+	var number int
+	for {
+		// Генерируем случайное четырехзначное число больше 5000
+		number = rand.Intn(5000) + 5001
+		if number%2 == 0 {
+			break // Выходим из цикла, если число четное
+		}
+	}
+
+	ip := "127.0.0.1"
+	port := number
+
 	scriptPath := "/home/vitalii/dev/kms_ffmpeg/ffmpeg+ksm.sh"
-	cmd := exec.Command("sudo", scriptPath)
+	cmd := exec.Command("sudo", scriptPath, strconv.Itoa(port))
+	w.externalProces[1] = cmd
 	err := cmd.Start()
 	if err != nil {
-		w.ErrMes <- err
+		w.ErrMes <- *messages.ErrStartCapture
+	}
+
+	w.listener, err = net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(ip), Port: port})
+	if err != nil {
+		w.ErrMes <- *messages.NewAppError(err, fmt.Sprintf("error occurred while creating udp listener on %s:%d", ip, port), "", "")
+		return
+	}
+
+	if err = w.listener.SetReadBuffer(1000000); err != nil {
+		w.ErrMes <- *messages.NewAppError(err, "error occurred while setting read buffer", "", "")
+		return
+	}
+
+	rtpBuf := make([]byte, 5000)
+readBufData:
+	for {
+		n, _, err := w.listener.ReadFrom(rtpBuf)
+		if err != nil {
+			w.ErrMes <- *messages.NewAppError(err, "error occurred while reading data from udp listener", "", "")
+			break readBufData
+		}
+		w.webrtc.SendVideo(rtpBuf[:n])
 	}
 }
 
 func (w *Worker) configureVirtualDevice() {
-	if w.PlayerDevice.Control.Gamepad {
+	if w.playerDevice.Control.Gamepad {
 		var err error
 		w.virtualDevice, err = uinput.CreateGamepad("/dev/uinput", []byte("testpad"), 045, 955)
 		if err != nil {
-			w.ErrMes <- err
+			w.ErrMes <- *messages.ErrCreateVirtualDevice
 		}
 	}
 }
@@ -189,4 +262,10 @@ func (w *Worker) handleInput(data []byte) {
 		w.virtualDevice.ButtonUp(uinput.ButtonMode)
 	}
 
+}
+
+func (w *Worker) recovering() {
+	if r := recover(); r != nil {
+		w.logger.Error(r)
+	}
 }

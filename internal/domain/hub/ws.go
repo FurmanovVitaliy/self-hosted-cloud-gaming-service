@@ -1,49 +1,53 @@
 package hub
 
 import (
+	"cloud/internal/messages"
+	"log"
 	"sync"
 
 	"github.com/gorilla/websocket"
 )
 
 type WsManager struct {
-	mutex sync.RWMutex
-	conn  *websocket.Conn
+	mutex  sync.RWMutex
+	conn   *websocket.Conn
+	errMes chan messages.AppError
 }
 
-func NewWsManager(conn *websocket.Conn) *WsManager {
-	return &WsManager{
-		conn: conn,
+func NewWsManager(conn *websocket.Conn, err chan messages.AppError) WsManager {
+	return WsManager{
+		errMes: err,
+		conn:   conn,
 	}
 }
 
-func (w *WsManager) WriteJSON(v interface{}) error {
+func (w *WsManager) WriteJSON(v interface{}) {
 	w.mutex.Lock()
 	defer w.mutex.Unlock()
 	err := w.conn.WriteJSON(v)
 	if err != nil {
-		return err
+		w.errMes <- *messages.NewAppError(err, "error occurred while writing json", "", "")
 	}
-	return nil
 }
 
-func (w *WsManager) ReadMessage() (*Message, error) {
+func (w *WsManager) ReadMessage() *messages.Message {
 	w.mutex.RLock()
 	defer w.mutex.RUnlock()
-	var msg Message
+	var msg messages.Message
 	err := w.conn.ReadJSON(&msg)
 	if err != nil {
 		if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-			return nil, err
+			return nil
 		}
-		return nil, err
+		w.errMes <- *messages.NewAppError(err, "error occurred while reading json", "", "")
+		return nil
 	}
-	return &msg, nil
+	return &msg
 }
-func (w *WsManager) Close() error {
+
+func (w *WsManager) Close() {
 	err := w.conn.Close()
 	if err != nil {
-		return err
+		log.Println(err)
 	}
-	return nil
 }

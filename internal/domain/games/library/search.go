@@ -3,6 +3,7 @@ package library
 import (
 	"cloud/internal/domain/games"
 	"cloud/pkg/logger"
+	hashsum "cloud/pkg/utils/heshsum"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -51,14 +52,14 @@ func NewSerchEngine(extantions, directories, names []string, id, token string, l
 	}
 }
 
-func (e *gameSearch) ScanLibrary() ([]games.Game, error) {
+func (e *gameSearch) ScanLibrary() ([]games.Game, string, error) {
 	e.logger.Info("scaning is started")
 	for _, path := range e.directories {
 		e.logger.Info("scanning directory with path: ", path)
 		entries, err := os.ReadDir(path)
 		if err != nil {
 			e.logger.Error(err)
-			return nil, err
+			return nil, "", err
 		}
 		for _, entry := range entries {
 			if entry.IsDir() {
@@ -69,7 +70,7 @@ func (e *gameSearch) ScanLibrary() ([]games.Game, error) {
 		}
 	}
 	if len(e.gameDirs) == 0 {
-		return nil, fmt.Errorf("no game directories found")
+		return nil, "", fmt.Errorf("no game directories found")
 	}
 
 	for i, gDir := range e.gameDirs {
@@ -88,7 +89,7 @@ func (e *gameSearch) ScanLibrary() ([]games.Game, error) {
 			return nil
 		})
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 	}
 	var g []games.Game
@@ -102,11 +103,13 @@ func (e *gameSearch) ScanLibrary() ([]games.Game, error) {
 		})
 	}
 
-	return g, nil
+	e.logger.Info("scaning is finished")
+	hash := hashsum.Hashsum(g)
+	return g, hash, nil
 }
 
 func (e *gameSearch) GetInfoFromIGDB(gms []games.Game) ([]games.Game, error) {
-
+	e.logger.Info("getting exra info from IGDB")
 	for i, game := range gms {
 		info, err := e.igdb.Games.Search(
 			game.Name,

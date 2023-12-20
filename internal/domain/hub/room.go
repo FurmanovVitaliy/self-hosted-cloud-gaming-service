@@ -26,3 +26,10 @@ type GetRoomRes struct {
 	UUID string `json:"uuid"`
 	Game string `json:"game"`
 }
+
+type RoomStatusRes struct {
+	Exist          bool   `json:"exist"`
+	Bysy           bool   `json:"bysy"`
+	Game           string `json:"game"`
+	PlayerQuantity int    `json:"player_quantity"`
+}

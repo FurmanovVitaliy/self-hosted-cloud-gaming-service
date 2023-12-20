@@ -1,4 +1,4 @@
-package apperror
+package messages
 
 import (
 	"encoding/json"
@@ -7,6 +7,10 @@ import (
 
 var (
 	ErrNotFound = NewAppError(nil, "not found", "", "US-000001")
+
+	ErrStartGame           = NewAppError(nil, "error while starting game", "", "WO-000001")
+	ErrStartCapture        = NewAppError(nil, "error while starting capture", "", "WO-000002")
+	ErrCreateVirtualDevice = NewAppError(nil, "error while creating virtual device", "", "WO-000003")
 )
 
 type AppError struct {

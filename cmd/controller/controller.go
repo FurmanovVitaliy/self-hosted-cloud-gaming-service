@@ -11,6 +11,7 @@ import (
 	"cloud/internal/domain/user"
 	"cloud/pkg/client"
 	"cloud/pkg/logger"
+	hashsum "cloud/pkg/utils/heshsum"
 	"context"
 	"net/http"
 
@@ -22,6 +23,7 @@ type Controller struct {
 	logger   *logger.Logger
 	config   *config.Config
 	hub      *hub.Hub
+	storage  [2]interface{}
 	handlers [3]handlers.Handler
 	doneChan chan struct{}
 }
@@ -36,6 +38,7 @@ func NewController(config *config.Config, logger *logger.Logger) (*Controller, e
 
 func (c *Controller) Run() {
 	c.servicesInition()
+	go c.scanLib()
 	go c.hub.Run()
 	go c.startHttpServer()
 	<-c.doneChan
@@ -53,11 +56,14 @@ func (c *Controller) servicesInition() {
 	}
 	c.logger.Info("Connected to DB")
 
+	c.storage[0] = hashsum.HashStorage(dbConn, "hashsum", c.logger)
+
 	uStorage := user.NewStorage(dbConn, "users", c.logger)
+
 	uSetvice := user.NewService(uStorage, c.logger)
 
 	gStorage := games.NewStorage(dbConn, "games", c.logger)
-	//gStorage.FullyUpdate(context.Background(), c.scanLib())
+	c.storage[1] = gStorage
 	gService := games.NewService(gStorage)
 
 	c.hub = hub.NewHub()
@@ -97,18 +103,32 @@ func (c *Controller) startHttpServer() {
 	httpServer.ListenAndServeTLS(certFile, keyFile)
 
 }
-func (c *Controller) scanLib() []games.Game {
+func (c *Controller) scanLib() {
+	hstore := c.storage[0].(hashsum.Storage)
+	gstore := c.storage[1].(games.Storage)
+
 	serchCfg := c.config.GameSearch
 	igbdCfg := c.config.IGBD
-	search := library.NewSerchEngine(serchCfg.FileExtenstions, serchCfg.Directories, serchCfg.NamesToCompare, igbdCfg.ID, igbdCfg.Token, c.logger)
-	g, err := search.ScanLibrary()
+
+	scaner := library.NewSerchEngine(serchCfg.FileExtenstions, serchCfg.Directories, serchCfg.NamesToCompare, igbdCfg.ID, igbdCfg.Token, c.logger)
+	g, hash, err := scaner.ScanLibrary()
 	if err != nil {
 		c.logger.Error(err)
+		return
 	}
-	g, err = search.GetInfoFromIGDB(g)
+	dbHash, _ := hstore.FindOne(context.Background(), "game_lib")
+	if hashsum.CheckSum(dbHash, hash) {
+		c.logger.Info("no changes in library")
+		return
+	}
+	hstore.Update(context.Background(), "game_lib", hash)
+	g, err = scaner.GetInfoFromIGDB(g)
 	if err != nil {
 		c.logger.Error(err)
-		return g
+		return
 	}
-	return g
+	if err = gstore.FullyUpdate(context.Background(), g); err != nil {
+		c.logger.Error(err)
+		return
+	}
 }

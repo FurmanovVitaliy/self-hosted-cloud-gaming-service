@@ -1,72 +1,70 @@
 package webrtc
 
 import (
+	"cloud/internal/messages"
 	"cloud/pkg/logger"
-	"net"
-	"time"
-
 	"fmt"
-
 	"strings"
+	"time"
 
 	"github.com/pion/webrtc/v4"
 )
 
-type RTCMessage struct {
-	ContentType string `json:"content_type"`
-	Content     string `json:"content"`
-}
-
 type WRTC struct {
-	conn      *webrtc.PeerConnection
-	logger    logger.Logger
-	OnMessage func(data []byte)
+	conn             *webrtc.PeerConnection
+	logger           logger.Logger
+	remoteCandidates []webrtc.ICECandidateInit
+	OnMessage        func(data []byte)
+	IsClosed         bool
 
-	isAnswer bool
-	stop     chan (bool)
+	sysMes chan messages.Message
+	errMes chan messages.AppError
 
 	audio *webrtc.TrackLocalStaticRTP
 	video *webrtc.TrackLocalStaticRTP
 	data  *webrtc.DataChannel
 }
 
-func New() *WRTC {
-	return &WRTC{
-		stop:     make(chan bool),
-		isAnswer: false,
-		logger:   logger.Init("7"),
+func New(sys chan messages.Message, err chan messages.AppError) WRTC {
+	return WRTC{
+		remoteCandidates: make([]webrtc.ICECandidateInit, 3, 6),
+		IsClosed:         false,
+		sysMes:           sys,
+		errMes:           err,
+		logger:           logger.Init("7"),
 	}
 }
-func (w *WRTC) Start(vCodec, aCodec string, sendToClient func(any) error) (err error) {
+func (w *WRTC) Start(vCodec, aCodec string) {
+	defer w.recovering()
+	var err error
 	w.conn, err = webrtc.NewPeerConnection(webrtc.Configuration{
 		ICEServers: []webrtc.ICEServer{{URLs: []string{"stun:stun1.l.google.com:19302"}}},
 	})
 	if err != nil {
+		w.errMes <- *messages.NewAppError(err, "error occurred while creating peer connection", "", "")
 		return
 	}
 	w.conn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
 		w.logger.Infof("connection state has changed:  %s \n", connectionState.String())
 		switch connectionState {
+		case webrtc.ICEConnectionStateFailed:
+			w.sysMes <- *messages.RtcConnectionClosed
+			w.Stop()
 		case webrtc.ICEConnectionStateClosed:
+			w.sysMes <- *messages.RtcConnectionClosed
 			w.Stop()
 		case webrtc.ICEConnectionStateDisconnected:
+			w.sysMes <- *messages.RtcConnectionClosed
 			w.Stop()
 		}
 	})
 
 	w.conn.OnICECandidate(func(candidate *webrtc.ICECandidate) {
 		if candidate == nil {
-			sendToClient(RTCMessage{
-				ContentType: SIGNAL,
-				Content:     SERVER_ICE_GATHERING_COMPLETE,
-			})
-			w.logger.Warn("ice gathering is complete")
+			w.sysMes <- *messages.NewMessage("", "", messages.RTC_SIGNAL, messages.RtcIceGatheringComplete)
 		}
 		if candidate != nil {
-			sendToClient(RTCMessage{
-				ContentType: SERVER_CANDIDATE,
-				Content:     Encode(candidate.ToJSON()),
-			})
+			w.sysMes <- *messages.NewMessage("", "", messages.RTC_SERVER_CANDIDATE, Encode(candidate.ToJSON()))
 			w.logger.Debug("ice candidate found :", candidate)
 		}
 	})
@@ -74,11 +72,12 @@ func (w *WRTC) Start(vCodec, aCodec string, sendToClient func(any) error) (err e
 	// plug in the [video] track (out)
 	video, err := newTrack("video", "pion", vCodec)
 	if err != nil {
-		w.logger.Error("error while creating video track", err)
+		w.errMes <- *messages.NewAppError(err, "error occurred while creating video track", "", "")
+		return
 	}
 	_, err = w.conn.AddTrack(video)
 	if err != nil {
-		w.logger.Error("error while adding video track to Peer", err)
+		w.errMes <- *messages.NewAppError(err, "error occurred while adding video track", "", "")
 		return
 	}
 	w.video = video
@@ -87,115 +86,99 @@ func (w *WRTC) Start(vCodec, aCodec string, sendToClient func(any) error) (err e
 	// plug in the [audio] track (out)
 	audio, err := newTrack("audio", "pion", aCodec)
 	if err != nil {
-		w.logger.Error("error while creating audio track", err)
+		w.errMes <- *messages.NewAppError(err, "error occurred while creating audio track", "", "")
+		return
 	}
 	_, err = w.conn.AddTrack(audio)
 	if err != nil {
-		w.logger.Error("error while adding audio track to Peer", err)
+		w.errMes <- *messages.NewAppError(err, "error occurred while adding audio track", "", "")
+		return
 	}
 	w.audio = audio
 	w.logger.Debugf("added [%s] track", audio.Codec().MimeType)
+
 	// plug in the [data] channel (in and out)
-	if err = w.addDataChannel("input"); err != nil {
-		return
-	}
+	w.addDataChannel("input")
+
 	w.logger.Debug("added [data] chan")
 
 	offer, err := w.conn.CreateOffer(nil)
 	if err != nil {
-		w.logger.Error(err)
+		w.errMes <- *messages.NewAppError(err, "error occurred while creating offer", "", "")
 		return
 	}
 	w.logger.Info("server created offer")
 
 	err = w.conn.SetLocalDescription(offer)
 	if err != nil {
-		w.logger.Error(err)
+		w.errMes <- *messages.NewAppError(err, "error occurred while setting local description", "", "")
 		return
 	}
 	w.logger.Info("server local description is set")
 
-	sendToClient(RTCMessage{
-		ContentType: OFFER,
-		Content:     Encode(offer),
-	})
-
-	return
+	w.sysMes <- *messages.NewMessage("", "", messages.RTC_OFFER, Encode(offer))
 }
-func (w *WRTC) SetAnswer(data string) error {
+
+func (w *WRTC) SetAnswer(data string) {
+	defer w.recovering()
 	var answear webrtc.SessionDescription
 	Decode(data, &answear)
 	err := w.conn.SetRemoteDescription(answear)
 	if err != nil {
-		w.logger.Errorf("error occurred while setting remote description: %s", err)
-		return err
+		w.errMes <- *messages.NewAppError(err, "error occurred while setting remote description", "", "")
+		return
 	}
 	w.logger.Info("remote description is set")
-	w.isAnswer = true
-	return nil
+	time.Sleep(3 * time.Second)
+	if (len(w.remoteCandidates)) > 0 {
+		w.setCandidate()
+	} else {
+		w.logger.Warn("no candidates")
+	}
 }
-
-func (w *WRTC) AddCandidate(data string) error {
-	w.waitForAction(w.isAnswer)
+func (w *WRTC) setCandidate() {
+	for _, candidate := range w.remoteCandidates {
+		w.logger.Debug("adding candidate: ", candidate)
+		err := w.conn.AddICECandidate(candidate)
+		if err != nil {
+			w.errMes <- *messages.NewAppError(err, "error occurred while adding candidate", "", "")
+		}
+		w.logger.Info("candidate added")
+	}
+}
+func (w *WRTC) AddCandidate(data string) {
 	var candidate webrtc.ICECandidateInit
 	Decode(data, &candidate)
 	w.logger.Debug("received candidate: ", candidate)
-	err := w.conn.AddICECandidate(candidate)
-	if err != nil {
-		w.logger.Errorf("error occurred while adding candidate: %s", err)
-		return err
-	}
-	w.logger.Info("candidate added")
-	return nil
+	w.remoteCandidates = append(w.remoteCandidates, candidate)
 }
 
 func (w *WRTC) SendData(data []byte) {
+	defer w.recovering()
 	err := w.data.Send(data)
 	if err != nil {
-		w.logger.Errorf("error occurred while data sending: %s", err)
+		w.errMes <- *messages.NewAppError(err, "error occurred while sending data", "", "")
 	}
 }
 
-func (w *WRTC) SendVideo(ip string, port int) {
-	listener, err := net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(ip), Port: port})
+func (w *WRTC) SendVideo(data []byte) {
+	_, err := w.video.Write(data)
 	if err != nil {
-		w.logger.Errorf("error occurred while socket creating: %s", err)
-		return
-	}
-	defer listener.Close()
-
-	if err := listener.SetReadBuffer(1000000); err != nil {
-		w.logger.Errorf("error occurred while setting read buffer: %s", err)
-		return
+		w.errMes <- *messages.NewAppError(err, "error occurred while sending video", "", "")
 	}
 
-	rtpBuf := make([]byte, 5000)
-readBufData:
-	for {
-		select {
-		case <-w.stop:
-			break readBufData // выход из цикла при получении сигнала остановки
-		default:
-			n, _, err := listener.ReadFrom(rtpBuf)
-			if err != nil {
-				w.logger.Errorf("error occurred while data reading: %s", err)
-				break readBufData // выход из цикла при ошибке чтения данных
-			}
-			if _, err := w.video.Write(rtpBuf[:n]); err != nil {
-				w.logger.Errorf("error occurred while video sending: %s", err)
-				break readBufData // выход из цикла при ошибке отправки видео
-			}
-		}
-	}
 }
-
 func (w *WRTC) SendAudio(data []byte) {}
 
 func (w *WRTC) Stop() {
-	w.stop <- true
-	w.data.Close()
-	w.conn.Close()
-
+	if w.conn == nil {
+		return
+	}
+	if w.conn.ConnectionState() < webrtc.PeerConnectionStateConnecting {
+		_ = w.conn.Close()
+	}
+	w.IsClosed = true
+	w.logger.Warn("webrtc stoped")
 }
 
 func newTrack(id string, label string, codec string) (*webrtc.TrackLocalStaticRTP, error) {
@@ -222,10 +205,12 @@ func newTrack(id string, label string, codec string) (*webrtc.TrackLocalStaticRT
 	return webrtc.NewTrackLocalStaticRTP(webrtc.RTPCodecCapability{MimeType: mime}, id, label)
 }
 
-func (w *WRTC) addDataChannel(label string) error {
+func (w *WRTC) addDataChannel(label string) {
+	defer w.recovering()
 	ch, err := w.conn.CreateDataChannel(label, nil)
 	if err != nil {
-		return err
+		w.errMes <- *messages.NewAppError(err, fmt.Sprintf("error occurred while creating data channel %s", label), "", "")
+		return
 	}
 	ch.OnOpen(func() {
 		w.logger.Info("data channel [input] opened")
@@ -242,19 +227,11 @@ func (w *WRTC) addDataChannel(label string) error {
 	})
 	w.data = ch
 	ch.OnClose(func() { w.logger.Info("data channel [input] closed") })
-	return nil
 }
 
-// hack
-func (w *WRTC) waitForAction(action bool) {
-	for {
-		if !action {
-			time.Sleep(3 * time.Second)
-			w.logger.Warn("waiting for action")
-			w.waitForAction(action)
-		} else {
-			time.Sleep(2 * time.Second)
-			break
-		}
+func (w *WRTC) recovering() {
+	if r := recover(); r != nil {
+		w.logger.Error(r)
+		w.Stop()
 	}
 }

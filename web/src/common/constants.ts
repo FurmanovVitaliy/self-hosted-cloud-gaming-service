@@ -27,9 +27,10 @@ const constants = {
     RTC_INPUT_READY: "inputReady",
   },
   RTC_SIGNAL: {
-    SERVER_ICE_GATHERING_COMPLETE : "sigc",
+    SERVER_ICE_GATHERING_COMPLETE : "serverIceGatheringComplete",
     CONNECTION_READY: 'connectionReady',
   },
+  
 
   RTC_ENTITY_NAME: {
     OFFER: "offer",
