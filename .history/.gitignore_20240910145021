@@ -1,0 +1,7 @@
+container/*
+docker/*
+web/node_modules
+web/build
+web/README.md
+.vscode
+.history
