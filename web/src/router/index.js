@@ -24,6 +24,9 @@ export const getPathRoute =(path) => {
     const target = routesPages.find(r => r.route.match(path))
     if (target) {
         const params = target.route.match(path)
+        console.log(target.page)
+        console.log(target.route)
+        console.log(params)
         return {
             page: target.page,
             route: target.route,

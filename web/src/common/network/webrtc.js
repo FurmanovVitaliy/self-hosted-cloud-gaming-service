@@ -104,19 +104,24 @@ export class WebRTC {
       this.mediaStream.remove();
       this.mediaStream.srcObject = null;
       this.mediaStream = null;
+      log.info("[rtc] media stream has been removed");
     }
-    if (this.conn) {
-      this.conn.close();
-      this.conn = null;
-    }
+   
     if (this.dataChannel) {
       this.dataChannel.close();
       this.dataChannel = null;
       this.onData = null;
+      log.info("[rtc] data channel has been closed");
     }
+    
     this.localCandidates = null;
     this.remoteCandidates = null;
+    if (this.conn) {
+     this.conn.close();
+     this.conn = null;
     log.info("[rtc] connection has been closed");
+    }
+   
   }
 
   input(data) {

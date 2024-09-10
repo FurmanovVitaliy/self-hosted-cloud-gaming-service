@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Henry-Sarabia/igdb/v2"
 	"github.com/sahilm/fuzzy"
@@ -113,7 +114,7 @@ func (e *gameSearch) GetInfoFromIGDB(gms []games.Game) ([]games.Game, error) {
 	for i, game := range gms {
 		info, err := e.igdb.Games.Search(
 			game.Name,
-			igdb.SetFields("cover", "name", "url"),
+			igdb.SetFields("cover", "name", "url", "total_rating", "summary", "videos", "first_release_date"),
 			igdb.SetFilter("cover", igdb.OpNotEquals, "null"),
 			igdb.SetFilter("version_parent", igdb.OpEquals, "null"),
 			igdb.SetFilter("rating", igdb.OpGreaterThan, "20"),
@@ -127,11 +128,34 @@ func (e *gameSearch) GetInfoFromIGDB(gms []games.Game) ([]games.Game, error) {
 			continue
 		}
 
-		cover, _ := e.igdb.Covers.Get(info[0].Cover, igdb.SetFields("image_id")) // retrieve cover IDs
-		title, _ := cover.SizedURL(igdb.Size1080p, 1)
+		cover, _ := e.igdb.Covers.Get(info[0].Cover, igdb.SetFields("image_id"))
+		poster, _ := cover.SizedURL(igdb.Size1080p, 1)
+		videosStringURL := []string{}
+
+		if len(info[0].Videos) != 0 {
+			for _, v := range info[0].Videos {
+				video, err := e.igdb.GameVideos.Get(v, igdb.SetFields("name", "video_id"))
+				if err != nil {
+					e.logger.Error(err)
+					continue
+				}
+				if video.Name == "Trailer" {
+					stringURl := "https://www.youtube.com/watch?v=" + video.VideoID
+					videosStringURL = append(videosStringURL, stringURl)
+
+				}
+			}
+		}
+
+		release := time.Unix(int64(info[0].FirstReleaseDate), 0).Year()
+
 		(gms)[i].Name = info[0].Name
 		(gms)[i].Url = info[0].URL
-		(gms)[i].Logo = title
+		(gms)[i].Rating = info[0].TotalRating
+		(gms)[i].Summary = info[0].Summary
+		(gms)[i].Videos = videosStringURL
+		(gms)[i].Poster = poster
+		(gms)[i].ReleaseDate = release
 		(gms)[i].IsGame = true
 	}
 	return gms, nil

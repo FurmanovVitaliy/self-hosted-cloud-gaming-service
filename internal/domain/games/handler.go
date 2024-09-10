@@ -28,7 +28,7 @@ func (h *handler) Register(router *httprouter.Router) {
 }
 
 func (h *handler) GetAll(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	cookies := r.Cookies()
+	/*cookies := r.Cookies()
 	var tokenString string
 	if len(cookies) == 0 {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -43,7 +43,7 @@ func (h *handler) GetAll(w http.ResponseWriter, r *http.Request, _ httprouter.Pa
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		return
-	}
+	}*/
 	w.Header().Set("Content-Type", "application/json")
 	games, _ := h.gameService.GetAll()
 	gamesJSON, _ := json.Marshal(games)

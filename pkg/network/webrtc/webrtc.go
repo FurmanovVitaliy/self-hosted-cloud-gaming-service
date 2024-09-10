@@ -27,7 +27,7 @@ type WRTC struct {
 
 func New(sys chan messages.Message, err chan messages.AppError) WRTC {
 	return WRTC{
-		remoteCandidates: make([]webrtc.ICECandidateInit, 3, 6),
+		remoteCandidates: make([]webrtc.ICECandidateInit, 0, 6),
 		IsClosed:         false,
 		sysMes:           sys,
 		errMes:           err,
@@ -45,6 +45,7 @@ func (w *WRTC) Start(vCodec, aCodec string) {
 		return
 	}
 	w.conn.OnICEConnectionStateChange(func(connectionState webrtc.ICEConnectionState) {
+		w.recovering()
 		w.logger.Infof("connection state has changed:  %s \n", connectionState.String())
 		switch connectionState {
 		case webrtc.ICEConnectionStateFailed:
@@ -130,30 +131,37 @@ func (w *WRTC) SetAnswer(data string) {
 	}
 	w.logger.Info("remote description is set")
 	time.Sleep(3 * time.Second)
-	if (len(w.remoteCandidates)) > 0 {
+	/*if (len(w.remoteCandidates)) > 0 {
 		w.setCandidate()
 	} else {
 		w.logger.Warn("no candidates")
-	}
+	}*/
 }
-func (w *WRTC) setCandidate() {
-	for _, candidate := range w.remoteCandidates {
-		w.logger.Debug("adding candidate: ", candidate)
-		err := w.conn.AddICECandidate(candidate)
-		if err != nil {
-			w.errMes <- *messages.NewAppError(err, "error occurred while adding candidate", "", "")
+
+/*
+	func (w *WRTC) setCandidate() {
+		for _, candidate := range w.remoteCandidates {
+			w.logger.Debug("adding candidate: ", candidate)
+			err := w.conn.AddICECandidate(candidate)
+			if err != nil {
+				w.errMes <- *messages.NewAppError(err, "error occurred while adding candidate", "", "")
+			}
+			w.logger.Info("candidate added")
 		}
-		w.logger.Info("candidate added")
 	}
-}
+*/
 func (w *WRTC) AddCandidate(data string) {
 	var candidate webrtc.ICECandidateInit
 	Decode(data, &candidate)
 	w.logger.Debug("received candidate: ", candidate)
-	w.remoteCandidates = append(w.remoteCandidates, candidate)
+	err := w.conn.AddICECandidate(candidate)
+	if err != nil {
+		w.errMes <- *messages.NewAppError(err, "error occurred while adding candidate", "", "")
+	}
 }
 
 func (w *WRTC) SendData(data []byte) {
+
 	defer w.recovering()
 	err := w.data.Send(data)
 	if err != nil {
@@ -162,13 +170,20 @@ func (w *WRTC) SendData(data []byte) {
 }
 
 func (w *WRTC) SendVideo(data []byte) {
+	w.WRTCrecovering()
 	_, err := w.video.Write(data)
 	if err != nil {
 		w.errMes <- *messages.NewAppError(err, "error occurred while sending video", "", "")
 	}
 
 }
-func (w *WRTC) SendAudio(data []byte) {}
+func (w *WRTC) SendAudio(data []byte) {
+	w.WRTCrecovering()
+	_, err := w.audio.Write(data)
+	if err != nil {
+		w.errMes <- *messages.NewAppError(err, "error occurred while sending audio", "", "")
+	}
+}
 
 func (w *WRTC) Stop() {
 	if w.conn == nil {
@@ -182,6 +197,7 @@ func (w *WRTC) Stop() {
 }
 
 func newTrack(id string, label string, codec string) (*webrtc.TrackLocalStaticRTP, error) {
+	fmt.Println("enter newTrack: ")
 	codec = strings.ToLower(codec)
 	var mime string
 	switch id {
@@ -194,11 +210,17 @@ func newTrack(id string, label string, codec string) (*webrtc.TrackLocalStaticRT
 		switch codec {
 		case "h264":
 			mime = webrtc.MimeTypeH264
+		case "h265", "hevc":
+			mime = webrtc.MimeTypeH265
+		case "av1":
+			mime = webrtc.MimeTypeAV1
 		case "vpx", "vp8":
 			mime = webrtc.MimeTypeVP8
 		}
+		fmt.Println(mime)
 	}
 	if mime == "" {
+		fmt.Println("unsupported codec")
 		return nil, fmt.Errorf("unsupported codec %s:%s", id, codec)
 	}
 
@@ -233,5 +255,10 @@ func (w *WRTC) recovering() {
 	if r := recover(); r != nil {
 		w.logger.Error(r)
 		w.Stop()
+	}
+}
+func (w *WRTC) WRTCrecovering() {
+	if r := recover(); r != nil {
+		w.logger.Error(r)
 	}
 }

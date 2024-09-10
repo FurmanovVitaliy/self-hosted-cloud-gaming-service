@@ -5,6 +5,8 @@ import (
 	"cloud/internal/messages"
 	"cloud/pkg/logger"
 	"cloud/pkg/network/webrtc"
+	"context"
+	"fmt"
 
 	"encoding/json"
 	"net/http"
@@ -61,6 +63,7 @@ func (h *handler) getRoomList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *handler) createRoom(w http.ResponseWriter, r *http.Request) {
+	h.hub.Mutex.Lock()
 	var req CreateRoomReq
 	err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil {
@@ -69,7 +72,7 @@ func (h *handler) createRoom(w http.ResponseWriter, r *http.Request) {
 	}
 	game, err := h.gameService.GetOne(req.GameID)
 	if err != nil {
-		h.logger.Errorf("Game with id %s not found while room (uuid %s) creating : %s", req.GameID, req.UUID, err)
+		h.logger.Errorf("Game with id '%s' not found while room (uuid %s) creating : %s", req.GameID, req.UUID, err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -79,6 +82,7 @@ func (h *handler) createRoom(w http.ResponseWriter, r *http.Request) {
 		Game:    game,
 		Workers: make(map[string]*Worker),
 	}
+
 	res := CreateRoomRes{
 		UUID:     req.UUID,
 		GameName: game.Name,
@@ -86,6 +90,7 @@ func (h *handler) createRoom(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(res)
 	h.logger.Info("room created:", h.hub.Rooms)
+	h.hub.Mutex.Unlock()
 }
 
 func (h *handler) getRoomState(w http.ResponseWriter, r *http.Request, p httprouter.Params) {
@@ -126,15 +131,20 @@ func (h *handler) joinRoom(w http.ResponseWriter, r *http.Request, p httprouter.
 	Mes := make(chan messages.Message)
 	ErrMes := make(chan messages.AppError)
 
+	fmt.Println("hub SRM : ", h.hub.SRM)
+	ctx, cancel := context.WithCancel(context.Background())
 	worker := &Worker{
-		username:  username,
-		roomUUID:  roomUUID,
-		logger:    h.logger,
-		Message:   Mes,
-		ErrMes:    ErrMes,
-		websocket: NewWsManager(websocket, ErrMes),
-		webrtc:    webrtc.New(Mes, ErrMes),
-		game:      h.hub.Rooms[roomUUID].Game,
+		username:        username,
+		roomUUID:        roomUUID,
+		logger:          h.logger,
+		Message:         Mes,
+		ErrMes:          ErrMes,
+		websocket:       NewWsManager(websocket, ErrMes),
+		webrtc:          webrtc.New(Mes, ErrMes),
+		game:            h.hub.Rooms[roomUUID].Game,
+		resourceManager: h.hub.SRM,
+		ctx:             ctx,
+		cancelFunc:      cancel,
 	}
 	h.hub.ConnectPlayer <- worker
 

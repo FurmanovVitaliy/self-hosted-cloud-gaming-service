@@ -70,10 +70,11 @@ class RoomDisplay extends HTMLElement {
   }
 
   interutting() {
+    console.log("interutting");
     this.webrtc.stop();
     this.socket.close();
     stopUpdatingGamepadState();
-    window.location.href = "/games";
+    //window.location.href = "/games";
     return
   }
 

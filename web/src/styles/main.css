@@ -5,11 +5,15 @@
 }
 
 
+
+
 :root {
 	--dark: #070707;
 	--sizeindex: calc(1vw + 1vh);
+	
 }
 body, html {
+	
 	width: 100%;
 	height: 100%;
 	background-color: var(--dark);
@@ -17,6 +21,7 @@ body, html {
 	font-family: raleway_m, sans-serif;
 	overflow: hidden;
 	line-height: 1.8;
+	
 }
 @font-face {
 	font-family: raleway_m;
@@ -33,3 +38,5 @@ body, html {
 	height: 100%;
 	font-size: calc(var(--sizeindex) *0.95);
 }
+ /* Убираем желтый фон у автозаполняемых полей */
+

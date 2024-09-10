@@ -2,18 +2,18 @@ package hub
 
 import (
 	"cloud/internal/domain/games"
+	"cloud/internal/domain/srm"
 	"cloud/internal/messages"
+	"cloud/pkg/input"
 	"cloud/pkg/input/keymapping"
 	"cloud/pkg/logger"
 	"cloud/pkg/network/webrtc"
-	"encoding/json"
+	"context"
 	"fmt"
-	"math/rand"
 	"net"
-	"os/exec"
-	"strconv"
+	"runtime"
 
-	"github.com/bendahl/uinput"
+	"strconv"
 )
 
 type PlayerDevice struct {
@@ -40,9 +40,12 @@ type Worker struct {
 	game                    games.Game
 	playerDevice            PlayerDevice
 	virtualDeviceKeymapping keymapping.XboxGpadInput
-	virtualDevice           uinput.Gamepad
-	externalProces          [2]*exec.Cmd
-	listener                *net.UDPConn
+	virtualDevice           *input.VirtualGamepad
+	ctx                     context.Context
+	cancelFunc              context.CancelFunc
+
+	resourceManager *srm.ServerResourceManager
+	serverResources *srm.SererResources
 }
 
 func (w *Worker) Run(h *Hub) {
@@ -50,16 +53,16 @@ func (w *Worker) Run(h *Hub) {
 	go w.hendleMessages(h)
 	go w.hansleWsMes()
 	w.webrtc.Start("h264", "opus")
+	w.serverResources, _ = w.resourceManager.AllocateResources()
 
 }
 func (w *Worker) Stop(h *Hub) {
-	w.logger.Warn("closing listener of worker " + w.username)
-	if w.listener != nil {
-		w.listener.Close()
-	}
+	w.logger.Warn("stopping capture in goroutine of worker " + w.username)
+	w.cancelFunc()
+
 	w.logger.Warn("stopping virtual device of worker " + w.username)
-	if w.virtualDevice != nil {
-		w.virtualDevice.Close()
+	if w.virtualDevice.Device != nil {
+		w.virtualDevice.Device.Close()
 	}
 	w.logger.Warn("stopping webrtc of worker " + w.username)
 	if !w.webrtc.IsClosed {
@@ -69,14 +72,6 @@ func (w *Worker) Stop(h *Hub) {
 	if h != nil {
 		h.DisconnectPlayer <- w
 	}
-	w.logger.Warn("killingexternal processesof worker " + w.username)
-	for _, cmd := range w.externalProces {
-		if cmd != nil {
-			w.logger.Info("kill process" + cmd.String())
-			cmd.Process.Kill()
-		}
-	}
-
 	w.logger.Infof("worker %s stopped", w.username)
 }
 
@@ -130,8 +125,9 @@ readingWsMes:
 				break readingWsMes
 			}
 			if msg.Content == messages.RtcConnectionReady {
-				//w.runGame()
-				go w.runCapture()
+				w.runGame()
+				go w.runVideoCapture()
+				go w.runAudioCapture()
 				break readingWsMes
 			}
 		case "deviceInfo":
@@ -143,70 +139,64 @@ readingWsMes:
 }
 
 func (w *Worker) runGame() {
-	protonePath := "/home/vitalii/.PP/PortProton/data/scripts/start.sh"
-	cmd := exec.Command(protonePath, w.game.Path)
-	w.externalProces[0] = cmd
-	err := cmd.Start()
-	if err != nil {
-		w.ErrMes <- *messages.ErrStartGame
+	_, id := w.resourceManager.ConfigureAndStartVm(
+		w.username,
+		w.game.Path,
+		"/home/vitalii/Dev/arch-containrer/simple-arch-container/LOCAL_STARAGE",
+		w.serverResources.XServer.ScreenNumber,
+		strconv.Itoa(w.serverResources.Listener.Audio.LocalAddr().(*net.UDPAddr).Port),
+		strconv.Itoa(w.serverResources.Listener.Video.LocalAddr().(*net.UDPAddr).Port),
+		strconv.Itoa(w.serverResources.XServer.Plane),
+		w.virtualDevice.Path,
+	)
+
+	w.serverResources.VMID = id
+}
+
+func (w *Worker) runVideoCapture() {
+	defer w.recovering()
+
+	rtpBuf := make([]byte, 10000000)
+	for {
+		select {
+		case <-w.ctx.Done():
+			fmt.Println("stop video capture")
+			return // Остановка горутины при отмене контекста
+		default:
+			n, _, err := w.serverResources.Listener.Video.ReadFrom(rtpBuf)
+			if err != nil {
+				w.ErrMes <- *messages.NewAppError(err, "error occurred while reading data from udp listener", "", "")
+				return
+			}
+			w.webrtc.SendVideo(rtpBuf[:n])
+		}
 	}
 }
 
-func (w *Worker) runCapture() {
+func (w *Worker) runAudioCapture() {
 	defer w.recovering()
-	defer func() {
-		if w.listener != nil {
-			w.listener.Close()
-		}
-	}()
-
-	var number int
-	for {
-		// Генерируем случайное четырехзначное число больше 5000
-		number = rand.Intn(5000) + 5001
-		if number%2 == 0 {
-			break // Выходим из цикла, если число четное
-		}
-	}
-
-	ip := "127.0.0.1"
-	port := number
-
-	scriptPath := "/home/vitalii/dev/kms_ffmpeg/ffmpeg+ksm.sh"
-	cmd := exec.Command("sudo", scriptPath, strconv.Itoa(port))
-	w.externalProces[1] = cmd
-	err := cmd.Start()
-	if err != nil {
-		w.ErrMes <- *messages.ErrStartCapture
-	}
-
-	w.listener, err = net.ListenUDP("udp", &net.UDPAddr{IP: net.ParseIP(ip), Port: port})
-	if err != nil {
-		w.ErrMes <- *messages.NewAppError(err, fmt.Sprintf("error occurred while creating udp listener on %s:%d", ip, port), "", "")
-		return
-	}
-
-	if err = w.listener.SetReadBuffer(1000000); err != nil {
-		w.ErrMes <- *messages.NewAppError(err, "error occurred while setting read buffer", "", "")
-		return
-	}
 
 	rtpBuf := make([]byte, 5000)
-readBufData:
 	for {
-		n, _, err := w.listener.ReadFrom(rtpBuf)
-		if err != nil {
-			w.ErrMes <- *messages.NewAppError(err, "error occurred while reading data from udp listener", "", "")
-			break readBufData
+		select {
+		case <-w.ctx.Done():
+			fmt.Println("stop audio capture")
+			return
+		default:
+			n, _, err := w.serverResources.Listener.Audio.ReadFrom(rtpBuf)
+			if err != nil {
+				w.ErrMes <- *messages.NewAppError(err, "error occurred while reading data from udp listener", "", "")
+				return
+			}
+			w.webrtc.SendAudio(rtpBuf[:n])
 		}
-		w.webrtc.SendVideo(rtpBuf[:n])
 	}
 }
 
 func (w *Worker) configureVirtualDevice() {
 	if w.playerDevice.Control.Gamepad {
 		var err error
-		w.virtualDevice, err = uinput.CreateGamepad("/dev/uinput", []byte("testpad"), 045, 955)
+		w.virtualDevice, err = input.CreateGamepad(w.username)
 		if err != nil {
 			w.ErrMes <- *messages.ErrCreateVirtualDevice
 		}
@@ -214,58 +204,16 @@ func (w *Worker) configureVirtualDevice() {
 }
 
 func (w *Worker) handleInput(data []byte) {
-
-	json.Unmarshal(data, &w.virtualDeviceKeymapping)
-
-	x, _ := strconv.ParseFloat(w.virtualDeviceKeymapping.RS.X, 32)
-	y, _ := strconv.ParseFloat(w.virtualDeviceKeymapping.RS.Y, 32)
-
-	w.virtualDevice.RightStickMove(float32(x), float32(y))
-
-	lsX, _ := strconv.ParseFloat(w.virtualDeviceKeymapping.LS.X, 32)
-	lsY, _ := strconv.ParseFloat(w.virtualDeviceKeymapping.LS.Y, 32)
-	w.virtualDevice.LeftStickMove(float32(lsX), float32(lsY))
-
-	if w.virtualDeviceKeymapping.A == 1 {
-		w.virtualDevice.ButtonDown(uinput.ButtonSouth)
-	} else {
-		w.virtualDevice.ButtonUp(uinput.ButtonSouth)
-	}
-	if w.virtualDeviceKeymapping.X == 1 {
-		w.virtualDevice.ButtonDown(uinput.ButtonWest)
-	} else {
-		w.virtualDevice.ButtonUp(uinput.ButtonWest)
-	}
-	if w.virtualDeviceKeymapping.Y == 1 {
-		w.virtualDevice.ButtonDown(uinput.ButtonNorth)
-	} else {
-		w.virtualDevice.ButtonUp(uinput.ButtonNorth)
-	}
-	if w.virtualDeviceKeymapping.LB == 1 {
-		w.virtualDevice.ButtonDown(uinput.ButtonBumperLeft)
-	} else {
-		w.virtualDevice.ButtonUp(uinput.ButtonBumperLeft)
-	}
-	if w.virtualDeviceKeymapping.RB == 1 {
-		w.virtualDevice.ButtonDown(uinput.ButtonBumperRight)
-	} else {
-		w.virtualDevice.ButtonUp(uinput.ButtonBumperRight)
-	}
-	if w.virtualDeviceKeymapping.Start == 1 {
-		w.virtualDevice.ButtonDown(uinput.ButtonStart)
-	} else {
-		w.virtualDevice.ButtonUp(uinput.ButtonStart)
-	}
-	if w.virtualDeviceKeymapping.Main == 1 {
-		w.virtualDevice.ButtonDown(uinput.ButtonMode)
-	} else {
-		w.virtualDevice.ButtonUp(uinput.ButtonMode)
-	}
-
+	w.virtualDevice.HandleInput(data, w.virtualDeviceKeymapping)
 }
 
 func (w *Worker) recovering() {
 	if r := recover(); r != nil {
-		w.logger.Error(r)
+		// Создаем срез байт для хранения стека вызовов
+		buf := make([]byte, 1024)
+		// Читаем стек вызовов
+		n := runtime.Stack(buf, false)
+		// Логируем ошибку и стек вызовов
+		w.logger.Printf("Recovered from panic: %v\nStack trace: %s", r, buf[:n])
 	}
 }

@@ -3,6 +3,7 @@ import initRouter from './router'
 import './components'
 import './common/log'
 
+
 initRouter()
 
 
