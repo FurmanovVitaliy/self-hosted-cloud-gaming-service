@@ -11,12 +11,35 @@ import (
 )
 
 type Config struct {
-	Workdir     string
-	Environment string `yaml:"environment" env-default:"local"`
-	IsDebug     bool   `yaml:"is_debug" env-default:"true"`
-	LogLevel    string `yaml:"log_level" env-default:"debug"`
-	MongoDb     `yaml:"mongodb"`
-	JWT         `yaml:"jwt"`
+	Workdir      string
+	Environment  string `yaml:"environment" env-default:"local"`
+	IsDebug      bool   `yaml:"is_debug" env-default:"true"`
+	LogLevel     string `yaml:"log_level" env-default:"debug"`
+	MongoDb      `yaml:"mongodb"`
+	JWT          `yaml:"jwt"`
+	Server       `yaml:"server"`
+	Cors         `yaml:"cors"`
+	Certificates `yaml:"certificates"`
+}
+
+type Server struct {
+	Type   string `yaml:"type" env-default:"port"`
+	BindIP string `yaml:"bind_ip" env-default:"127.0.0.1"`
+	Port   string `yaml:"port" env-default:"8080"`
+}
+
+type Cors struct {
+	AllowedMethods   []string `yaml:"allowed_methods"`
+	AllowedOrigins   []string `yaml:"allowed_origins"`
+	AllowedHeaders   []string `yaml:"allowed_headers"`
+	ExposedHeaders   []string `yaml:"exposed_headers"`
+	AllowCredentials bool     `yaml:"allow_credentials"`
+	MaxAge           int      `yaml:"max_age"`
+}
+
+type Certificates struct {
+	Cert string `yaml:"cert"`
+	Key  string `yaml:"key"`
 }
 
 type MongoDb struct {

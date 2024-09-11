@@ -2,14 +2,17 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/FurmanovVitaliy/pixel-cloud/config"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/adapters/jwt"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/game"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/user"
+	v1 "github.com/FurmanovVitaliy/pixel-cloud/internal/handler/http/api/v1"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/usecase"
 	"github.com/FurmanovVitaliy/pixel-cloud/pkg/client"
+	"github.com/FurmanovVitaliy/pixel-cloud/pkg/http"
 	"github.com/FurmanovVitaliy/pixel-cloud/pkg/logger"
 )
 
@@ -50,5 +53,22 @@ func (a *App) Run() {
 		tokenService,
 		a.logger)
 
-	println(uc)
+	//init http server
+	var serverConfig = &http.ServerConfig{
+		ServerPort:             a.config.Server.Port,
+		CorsAlloedMethods:      a.config.Cors.AllowedMethods,
+		CorsAllowedHeaders:     a.config.Cors.AllowedHeaders,
+		CorsAllowedOrigins:     a.config.Cors.AllowedOrigins,
+		CorsExposedHeaders:     a.config.Cors.ExposedHeaders,
+		CorsMaxAge:             a.config.Cors.MaxAge,
+		IsDebug:                a.config.IsDebug,
+		CorsAllowedCredentials: a.config.Cors.AllowCredentials,
+		CertFilePath:           fmt.Sprintf("%s/%s", a.config.Workdir, a.config.Certificates.Cert),
+		KeyFilePath:            fmt.Sprintf("%s/%s", a.config.Workdir, a.config.Certificates.Key),
+	}
+
+	handler := v1.NewHandler(uc, a.logger)
+	router := http.NewHttpRouter(handler)
+	server := http.NewServer(a.logger, serverConfig, router)
+	server.Run()
 }

@@ -1,3 +1,4 @@
 .vscode
 .history
 server/config/local.yaml
+server/cert/*
