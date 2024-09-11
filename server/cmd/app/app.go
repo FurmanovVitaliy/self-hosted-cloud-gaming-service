@@ -2,8 +2,12 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/FurmanovVitaliy/pixel-cloud/config"
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/game"
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/user"
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/usecase"
 	"github.com/FurmanovVitaliy/pixel-cloud/pkg/client"
 	"github.com/FurmanovVitaliy/pixel-cloud/pkg/logger"
 )
@@ -29,5 +33,16 @@ func (a *App) Run() {
 	}
 	a.logger.Info("Connected to DB")
 
-	println(mongoConn)
+	//init repositories
+	gStorage := game.NewStorage(mongoConn, "games", a.logger)
+	uStorage := user.NewStorage(mongoConn, "users", a.logger)
+
+	//init services
+	gameService := game.NewGameService(gStorage)
+	userService := user.NewUserService(uStorage, time.Second*5)
+
+	//init usecase
+	uc := usecase.NewUseCase(userService, gameService, a.logger)
+
+	println(uc)
 }
