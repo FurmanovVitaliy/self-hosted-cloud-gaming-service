@@ -15,6 +15,17 @@ type Config struct {
 	Environment string `yaml:"environment" env-default:"local"`
 	IsDebug     bool   `yaml:"is_debug" env-default:"true"`
 	LogLevel    string `yaml:"log_level" env-default:"debug"`
+	MongoDb     `yaml:"mongodb"`
+}
+
+type MongoDb struct {
+	Host        string `yaml:"host"`
+	Port        string `yaml:"port"`
+	Database    string `yaml:"database"`
+	AuthDB      string `yaml:"auth_db"`
+	Username    string `yaml:"username"`
+	Password    string `yaml:"password"`
+	Collections string `yaml:"collections"`
 }
 
 var instance *Config
