@@ -4,6 +4,11 @@
 ![Docker](https://img.shields.io/badge/Docker-27.2.0-blue?logo=docker)
 ![MongoDB](https://img.shields.io/badge/MongoDB-7.0.14-green?logo=mongodb)
 ![WebRTC](https://img.shields.io/badge/WebRTC-1.0.39-yellowgreen?logo=webrtc)
+![Vite](https://img.shields.io/badge/Vite-5.2-%23F7C845?logo=vite)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-%232b7489?logo=typescript)
+![SaaS](https://img.shields.io/badge/Sass-1.77-%23c25b5d?logo=sass)
+
+
 #### Packages Versions
 ![FFmpeg](https://img.shields.io/badge/FFmpeg-7.1-green?logo=ffmpeg)
 ![Arch Linux](https://img.shields.io/badge/Arch%20Linux-rolling-brightgreen?logo=archlinux)
