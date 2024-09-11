@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/adapters/igdb"
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/adapters/scanner"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/game"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/user"
 	"github.com/FurmanovVitaliy/pixel-cloud/pkg/logger"
@@ -27,23 +29,38 @@ type gameService interface {
 	DeleteAll(ctx context.Context) error
 }
 
+type scannerSerrvice interface {
+	CheckForChanges() bool
+	Scan() ([]scanner.Game, error)
+}
+
+type gameInfoService interface {
+	GetExtraInfoByName(name string) (gameInfo igdb.GameExtraInfo, err error)
+}
+
 type UseCase struct {
-	userService  userService
-	gameService  gameService
-	tokenService tokenService
-	logger       *logger.Logger
+	userService     userService
+	gameService     gameService
+	tokenService    tokenService
+	gameInfoService gameInfoService
+	scannerSerrvice scannerSerrvice
+	logger          *logger.Logger
 }
 
 func NewUseCase(
 	userService userService,
 	gameService gameService,
 	tokenService tokenService,
+	gameInfoService gameInfoService,
+	scannerSerrvice scannerSerrvice,
 	logger *logger.Logger,
 ) *UseCase {
 	return &UseCase{
-		userService:  userService,
-		gameService:  gameService,
-		tokenService: tokenService,
-		logger:       logger,
+		userService:     userService,
+		gameService:     gameService,
+		tokenService:    tokenService,
+		gameInfoService: gameInfoService,
+		scannerSerrvice: scannerSerrvice,
+		logger:          logger,
 	}
 }

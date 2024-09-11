@@ -20,6 +20,8 @@ type Config struct {
 	Server       `yaml:"server"`
 	Cors         `yaml:"cors"`
 	Certificates `yaml:"certificates"`
+	GameSearch   `yaml:"game_search"`
+	IGBD         `yaml:"igbd"`
 }
 
 type Server struct {
@@ -55,6 +57,18 @@ type MongoDb struct {
 type JWT struct {
 	SecretKey string `yaml:"secret_key"`
 	Expire    int    `yaml:"expire"`
+}
+
+type GameSearch struct {
+	SystemDirectories []string `yaml:"system_directories"`
+	FileExtenstions   []string `yaml:"extenstions"`
+	Directories       []string `yaml:"directories"`
+	NamesToCompare    []string `yaml:"names_to_compare"`
+}
+
+type IGBD struct {
+	ID    string `yaml:"id"`
+	Token string `yaml:"token"`
 }
 
 var instance *Config

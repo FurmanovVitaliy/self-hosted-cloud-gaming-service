@@ -6,7 +6,9 @@ import (
 	"time"
 
 	"github.com/FurmanovVitaliy/pixel-cloud/config"
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/adapters/igdb"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/adapters/jwt"
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/adapters/scanner"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/game"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/user"
 	v1 "github.com/FurmanovVitaliy/pixel-cloud/internal/handler/http/api/v1"
@@ -29,6 +31,7 @@ func NewApp(config *config.Config, logger *logger.Logger) (*App, error) {
 }
 
 func (a *App) Run() {
+
 	// Connect to DB
 	ctx := context.Background()
 	mongoConn, err := client.NewClient(ctx, a.config.MongoDb.Host, a.config.MongoDb.Port, a.config.MongoDb.Username, a.config.MongoDb.Password, a.config.MongoDb.Database, a.config.MongoDb.AuthDB)
@@ -40,18 +43,29 @@ func (a *App) Run() {
 	//init repositories
 	gStorage := game.NewStorage(mongoConn, "games", a.logger)
 	uStorage := user.NewStorage(mongoConn, "users", a.logger)
-	tokenService := jwt.NewJwtService(a.config.JWT.SecretKey)
-
+	sStorage := scanner.NewStorage(mongoConn, "hashsum", a.logger)
 	//init services
 	gameService := game.NewGameService(gStorage)
 	userService := user.NewUserService(uStorage, time.Second*5)
-
+	tokenService := jwt.NewJwtService(a.config.JWT.SecretKey)
+	//init game-scanner
+	scannerParams := scanner.CreateParams(a.config.GameSearch.SystemDirectories, a.config.GameSearch.Directories, a.config.GameSearch.NamesToCompare, a.config.GameSearch.FileExtenstions)
+	scannerService := scanner.New(ctx, a.logger, scannerParams, sStorage)
+	igdbClient, err := igdb.NewClient(a.config.IGBD.ID, a.config.IGBD.Token)
+	if err != nil {
+		a.logger.Fatalf("failed to connect to IGDB due to error: %s", err)
+	}
+	igdbService := igdb.New(igdbClient, a.logger)
 	//init usecase
 	uc := usecase.NewUseCase(
 		userService,
 		gameService,
 		tokenService,
+		igdbService,
+		scannerService,
 		a.logger)
+
+	uc.ScanLibrary()
 
 	//init http server
 	var serverConfig = &http.ServerConfig{
