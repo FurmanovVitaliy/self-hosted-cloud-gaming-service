@@ -1,0 +1,24 @@
+{
+  "name": "pixel-cloud",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "vite",
+    "build": "tsc && vite build",
+    "prod": "vite preview --mode production --port 3000"
+  },
+  "devDependencies": {
+    "sass": "^1.77.3",
+    "typescript": "^5.4.5",
+    "vite": "^5.2.0"
+  },
+  "dependencies": {
+    "-": "^0.0.1",
+    "@types/route-parser": "^0.1.7",
+    "@types/uuid": "^9.0.8",
+    "route-parser": "^0.0.5",
+    "swiper": "^11.1.1",
+    "uuid": "^9.0.1"
+  }
+}

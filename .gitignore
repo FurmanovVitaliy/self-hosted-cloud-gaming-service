@@ -1,4 +1,13 @@
+#IDE directories
 .vscode
 .history
+#Beckend directories
 server/config/local.yaml
 server/cert/*
+#Frontend directories
+web/node_modules
+web/build
+web/cert/*
+#Other directories
+
+
