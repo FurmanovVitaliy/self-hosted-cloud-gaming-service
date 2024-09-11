@@ -16,6 +16,7 @@ type Config struct {
 	IsDebug     bool   `yaml:"is_debug" env-default:"true"`
 	LogLevel    string `yaml:"log_level" env-default:"debug"`
 	MongoDb     `yaml:"mongodb"`
+	JWT         `yaml:"jwt"`
 }
 
 type MongoDb struct {
@@ -26,6 +27,11 @@ type MongoDb struct {
 	Username    string `yaml:"username"`
 	Password    string `yaml:"password"`
 	Collections string `yaml:"collections"`
+}
+
+type JWT struct {
+	SecretKey string `yaml:"secret_key"`
+	Expire    int    `yaml:"expire"`
 }
 
 var instance *Config

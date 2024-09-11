@@ -28,19 +28,22 @@ type gameService interface {
 }
 
 type UseCase struct {
-	userService userService
-	gameService gameService
-	logger      *logger.Logger
+	userService  userService
+	gameService  gameService
+	tokenService tokenService
+	logger       *logger.Logger
 }
 
 func NewUseCase(
 	userService userService,
 	gameService gameService,
+	tokenService tokenService,
 	logger *logger.Logger,
 ) *UseCase {
 	return &UseCase{
-		userService: userService,
-		gameService: gameService,
-		logger:      logger,
+		userService:  userService,
+		gameService:  gameService,
+		tokenService: tokenService,
+		logger:       logger,
 	}
 }

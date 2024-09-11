@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/FurmanovVitaliy/pixel-cloud/config"
+	"github.com/FurmanovVitaliy/pixel-cloud/internal/adapters/jwt"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/game"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/domain/user"
 	"github.com/FurmanovVitaliy/pixel-cloud/internal/usecase"
@@ -36,13 +37,18 @@ func (a *App) Run() {
 	//init repositories
 	gStorage := game.NewStorage(mongoConn, "games", a.logger)
 	uStorage := user.NewStorage(mongoConn, "users", a.logger)
+	tokenService := jwt.NewJwtService(a.config.JWT.SecretKey)
 
 	//init services
 	gameService := game.NewGameService(gStorage)
 	userService := user.NewUserService(uStorage, time.Second*5)
 
 	//init usecase
-	uc := usecase.NewUseCase(userService, gameService, a.logger)
+	uc := usecase.NewUseCase(
+		userService,
+		gameService,
+		tokenService,
+		a.logger)
 
 	println(uc)
 }
