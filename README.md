@@ -7,6 +7,10 @@
 ![Vite](https://img.shields.io/badge/Vite-5.2-%23F7C845?logo=vite)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.4.5-%232b7489?logo=typescript)
 ![SaaS](https://img.shields.io/badge/Sass-1.77-%23c25b5d?logo=sass)
+![HTML](https://img.shields.io/badge/HTML-5-%23E44D26?logo=html5)
+![JSX](https://img.shields.io/badge/JSX-Template%20Syntax-%23F7DF1E?logo=javascript)
+
+
 
 
 #### Packages Versions
