@@ -12,7 +12,7 @@ type handler interface {
 	SignUp(w http.ResponseWriter, r *http.Request)
 	Logout(w http.ResponseWriter, r *http.Request)
 
-	//GetGames(w http.ResponseWriter, r *http.Request)
+	GetGames(w http.ResponseWriter, r *http.Request)
 
 	//GetRooms(w http.ResponseWriter, r *http.Request)
 	//CreateRoom(w http.ResponseWriter, r *http.Request)
@@ -30,7 +30,7 @@ func (hr *httpRouter) RegisterRoutes() {
 	hr.router.HandlerFunc("POST", "/signup", hr.handler.SignUp)
 	hr.router.HandlerFunc("GET", "/logout", hr.handler.Logout)
 
-	//hr.router.HandlerFunc("GET", "/games", hr.handler.GetGames)
+	hr.router.HandlerFunc("GET", "/games", hr.handler.GetGames)
 
 	//hr.router.HandlerFunc("GET", "/rooms", hr.handler.GetRooms)
 	//hr.router.HandlerFunc("POST", "/room/create", hr.handler.CreateRoom)
