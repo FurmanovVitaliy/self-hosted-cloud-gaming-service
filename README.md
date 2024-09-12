@@ -35,6 +35,11 @@ I am excited to present my project, which I have been working on for the past ye
 - The foundation for scalability has been laid.
 - Project in developing...
   
-## Credits
+## Acknowledgements
+A special thanks to my wife for independently creating the design for this project in Figma. This project was developed with her creative vision, and I deeply appreciate her hard work and dedication throughout the entire process.
+
+-[Daria's Notion Portfolio](https://noiseless-giant-de5.notion.site/Daria-Furmanova-7eb639daae2a4c3a80779a1a3e47fad8)
+
+-[Project Desing](https://www.figma.com/design/k8omkRcRygvmN0byHsWpWE/Cloud-gaming?node-id=0-1&node-type=canvas&t=7FAcCzlvHcum)
 
 ## From Autor 
