@@ -1,10 +1,10 @@
 const constants = {
 	routes: {
-		home: "/home",
+		home: "/",
 		library: "/library",
 		rooms: "/rooms",
 		room: "/rooms/:uuid",
-		login: "/",
+		login: "/login",
 	},
 	log: {
 		enabled: true,
