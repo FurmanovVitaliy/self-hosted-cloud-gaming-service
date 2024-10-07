@@ -39,6 +39,11 @@ func (u *UseCase) ScanLibrary() {
 			Summary:     extraInfo.Summary,
 			Videos:      extraInfo.Videos,
 			ReleaseDate: extraInfo.ReleaseDate,
+			Images:      extraInfo.Images,
+			Genres:      extraInfo.Genres,
+			AgeRating:   extraInfo.AgeRating,
+			Developer:   extraInfo.Developer,
+			Publisher:   extraInfo.Publisher,
 			IsGame:      true,
 		}
 		//create the game in the database

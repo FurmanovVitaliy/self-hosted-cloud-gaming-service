@@ -19,6 +19,11 @@ type GetGamesReq struct {
 	Summary     string   `json:"summary,omitempty"`
 	Videos      []string `json:"videos,omitempty" `
 	ReleaseDate int      `json:"release,omitempty"`
+	Images      []string `json:"images,omitempty"`
+	AgeRating   string   `json:"age_rating,omitempty"`
+	Developer   string   `json:"developer,omitempty"`
+	Publisher   string   `json:"publisher,omitempty"`
+	Genres      []string `json:"genres,omitempty"`
 }
 
 // custom errors
@@ -45,6 +50,11 @@ func (u *UseCase) GetGames() (games []GetGamesReq, err error) {
 			Summary:     game.Summary,
 			Videos:      game.Videos,
 			ReleaseDate: game.ReleaseDate,
+			Images:      game.Images,
+			Genres:      game.Genres,
+			AgeRating:   game.AgeRating,
+			Developer:   game.Developer,
+			Publisher:   game.Publisher,
 		})
 	}
 	return games, nil
