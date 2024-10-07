@@ -9,7 +9,7 @@ import (
 )
 
 // ? systemctl start mongodb.service -- start mongodb service on linux
-func NewClient(ctx context.Context, host, port, username, password, database, authDB string) (*mongo.Database, error) {
+func NewMongoClient(ctx context.Context, host, port, username, password, database, authDB string) (*mongo.Database, error) {
 
 	var mongoDBURL string
 	var isAuth bool

@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -39,16 +38,15 @@ type LogingUserRes struct {
 
 // custom errors
 var (
-	ErrNotFound           = errors.New(http.StatusBadRequest, "AS", "000001", "not found")
-	ErrInvalidPassword    = errors.New(http.StatusBadRequest, "AS", "000002", "invalid password")
-	ErrTokenSing          = errors.New(http.StatusInternalServerError, "AS", "000003", "token signing error")
-	ErrPasswordHashing    = errors.New(http.StatusInternalServerError, "AS", "000004", "failed to hash password")
-	ErrFailedToCreateUser = errors.New(http.StatusInternalServerError, "AS", "000005", "failed to create user")
-	ErrAlradyExists       = errors.New(http.StatusBadRequest, "AS", "000006", "user with this login already exists")
+	ErrNotFound           = errors.New(http.StatusUnauthorized, "AS", "000001", "Login or password incorrect") //user not found
+	ErrInvalidPassword    = errors.New(http.StatusUnauthorized, "AS", "000002", "Login or password incorrect") //password not correct
+	ErrTokenSing          = errors.New(http.StatusInternalServerError, "AS", "000003", "Token signing error")
+	ErrPasswordHashing    = errors.New(http.StatusInternalServerError, "AS", "000004", "Failed to hash password")
+	ErrFailedToCreateUser = errors.New(http.StatusInternalServerError, "AS", "000005", "Failed to create user")
+	ErrAlradyExists       = errors.New(http.StatusBadRequest, "AS", "000006", "User with this login already exists")
 )
 
 func (u *UseCase) SingIn(ctx context.Context, req *LogingUserReq) (*LogingUserRes, error) {
-	fmt.Println(req)
 	res, err := u.userService.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return &LogingUserRes{}, ErrNotFound
