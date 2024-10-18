@@ -26,12 +26,25 @@ func decode[T any](r *http.Request) (T, error) {
 }
 
 // TODO: add  return status code and error message with out AppError class check
+// errorResponse returns an error response in JSON format
 func errorResponse(err error, w http.ResponseWriter, r *http.Request) {
+	// Handle AppError type specifically
 	if appErr, ok := err.(*errors.AppError); ok {
-		http.Error(w, "error", appErr.TransportCode)
-		w.Write(appErr.Marshal())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(appErr.TransportCode) // Use the error code as status
+		response := map[string]string{
+			"message": appErr.Message,
+			"code":    appErr.Code,
+		}
+		// Encode error message as JSON
+		if err := json.NewEncoder(w).Encode(response); err != nil {
+			// If encoding fails, log and send fallback error
+			http.Error(w, "failed to encode error response", http.StatusInternalServerError)
+		}
 		return
 	}
+
+	// Fallback for non-AppError errors
 	http.Error(w, err.Error(), http.StatusTeapot)
 }
 

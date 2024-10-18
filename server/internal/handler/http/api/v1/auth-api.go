@@ -12,7 +12,7 @@ func (h *handler) SingIn(w http.ResponseWriter, r *http.Request) {
 		errorResponse(err, w, r)
 		return
 	}
-	res, err := h.uc.SingIn(r.Context(), &req)
+	res, err := h.uc.SignIn(r.Context(), &req)
 
 	if err != nil {
 		errorResponse(err, w, r)
@@ -54,7 +54,7 @@ func (h *handler) SignUp(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		errorResponse(err, w, r)
 	}
-	res, err := h.uc.SingUp(r.Context(), &req)
+	res, err := h.uc.SignUp(r.Context(), &req)
 	if err != nil {
 		errorResponse(err, w, r)
 		return

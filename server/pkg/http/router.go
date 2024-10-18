@@ -14,9 +14,9 @@ type handler interface {
 
 	GetGames(w http.ResponseWriter, r *http.Request)
 
-	//GetRooms(w http.ResponseWriter, r *http.Request)
-	//CreateRoom(w http.ResponseWriter, r *http.Request)
-	//JoinRoom(w http.ResponseWriter, r *http.Request)
+	GetRooms(w http.ResponseWriter, r *http.Request)
+	CreateRoom(w http.ResponseWriter, r *http.Request)
+	JoinRoom(w http.ResponseWriter, r *http.Request)
 }
 
 /* httprouter.Router realization */
@@ -32,9 +32,9 @@ func (hr *httpRouter) RegisterRoutes() {
 
 	hr.router.HandlerFunc("GET", "/games", hr.handler.GetGames)
 
-	//hr.router.HandlerFunc("GET", "/rooms", hr.handler.GetRooms)
-	//hr.router.HandlerFunc("POST", "/room/create", hr.handler.CreateRoom)
-	//hr.router.HandlerFunc("GET", "/room/join/:uuid", hr.handler.JoinRoom)
+	hr.router.HandlerFunc("GET", "/rooms", hr.handler.GetRooms)
+	hr.router.HandlerFunc("POST", "/room/create", hr.handler.CreateRoom)
+	hr.router.HandlerFunc("GET", "/room/join/:uuid", hr.handler.JoinRoom)
 }
 
 func NewHttpRouter(handler handler) *httpRouter {
