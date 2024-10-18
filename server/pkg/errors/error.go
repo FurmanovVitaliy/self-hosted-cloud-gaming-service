@@ -51,9 +51,10 @@ func New(transportCode int, service, code, message string) *AppError {
 
 func Wrap(err error, service, code, message string) *AppError {
 	return &AppError{
-		Err:     err,
-		Code:    service + "-" + code,
-		Message: message,
+		Err:           err,
+		Code:          service + "-" + code,
+		Message:       message,
+		TransportCode: http.StatusInternalServerError,
 	}
 }
 
