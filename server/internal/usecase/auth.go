@@ -46,7 +46,7 @@ var (
 	ErrAlradyExists       = errors.New(http.StatusBadRequest, "AS", "000006", "User with this login already exists")
 )
 
-func (u *UseCase) SingIn(ctx context.Context, req *LogingUserReq) (*LogingUserRes, error) {
+func (u *UseCase) SignIn(ctx context.Context, req *LogingUserReq) (*LogingUserRes, error) {
 	res, err := u.userService.FindByEmail(ctx, req.Email)
 	if err != nil {
 		return &LogingUserRes{}, ErrNotFound
@@ -70,7 +70,7 @@ func (u *UseCase) SingIn(ctx context.Context, req *LogingUserReq) (*LogingUserRe
 	}, nil
 }
 
-func (u *UseCase) SingUp(ctx context.Context, req *CreateUserReq) (*CreateUserRes, error) {
+func (u *UseCase) SignUp(ctx context.Context, req *CreateUserReq) (*CreateUserRes, error) {
 	_, err := u.userService.FindByEmail(ctx, req.Email)
 	if err == nil {
 		return &CreateUserRes{}, ErrAlradyExists
