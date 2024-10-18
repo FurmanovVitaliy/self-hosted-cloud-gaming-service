@@ -87,15 +87,27 @@ func getFoldersHash(paths []string) (string, error) {
 	var totalSize int64
 	var lastModified time.Time
 
+	// Сортируем пути
 	sort.Strings(paths)
 
 	for _, path := range paths {
+		// Обходим все файлы в директории
 		err := filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 			if err != nil {
 				return err
 			}
+			// Проверяем, что это файл, а не директория
 			if !info.IsDir() {
+				// Пропускаем файлы с расширением .ppbd
+				if filepath.Ext(filePath) == ".ppbd" {
+					return nil
+				}
+				if filepath.Ext(filePath) == ".ini" {
+					return nil
+				}
+				// Увеличиваем общий размер файлов
 				totalSize += info.Size()
+				// Обновляем время последнего изменения, если оно новее
 				if info.ModTime().After(lastModified) {
 					lastModified = info.ModTime()
 				}
@@ -108,7 +120,9 @@ func getFoldersHash(paths []string) (string, error) {
 		}
 	}
 
+	// Формируем строку с данными о размере и времени последнего изменения
 	data := fmt.Sprintf("%d-%s", totalSize, lastModified.String())
+	// Создаем хеш MD5
 	hash := md5.Sum([]byte(data))
 	return hex.EncodeToString(hash[:]), nil
 }
