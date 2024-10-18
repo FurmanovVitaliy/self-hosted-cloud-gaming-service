@@ -1,0 +1,122 @@
+app:
+  name: GameService
+  version: 1.0.0
+environment: local #local, dev, prod
+
+is_debug: true
+
+log_level: debug #debug, info, warn, error, fatal, panic
+
+router: httprouter  
+
+cors:
+  allowed_origins:
+    - "https://localhost:3000"
+    - "https://192.168.1.13:3000"
+  allowed_methods:
+    - GET
+    - POST
+  allowed_headers:
+    - Content-Type
+    - Authorization
+  exposed_headers:
+    - Content-Length
+  allow_credentials: true
+  max_age: 300
+
+server:
+  type: port #Use 'port' for TCP or 'socket' for UNIX Socket(no need ip & port values)
+  bind_ip: localhost
+  port: 8000
+
+mongodb:
+  host: localhost
+  port: 27017
+  database: gameservice
+  username:
+  auth_db:
+  password:
+  collections: users
+
+postgres:
+  host: "localhost"
+  port: 5432
+  username: "vitalii"
+  password: ""
+  database: pixelCloud
+  attampts: 5
+
+game_search:
+  extenstions: #game extantions 
+    - .nsp #Nintendo Switch
+    - .exe #Windows
+    - .x86_64 #Linux
+  directories: #directories to scan for games
+    - "/home/vitalii/Games/Win"
+    - "/home/vitalii/Games/Nintendo"
+  names_to_compare: #dificult names to parse (if your game not appear in search, try to add correct game name here)
+    - "Red Dead Redemption 2"
+    - "Elden Ring"
+    - "The Witcher 3: Wild Hunt"
+    - "Project Zomboid"
+
+docker:
+  pulse_image: arch:pulseaudio
+  video_image: arch:ffmpeg-video
+  audio_image: arch:ffmpeg-audio
+  protone_image: arch:portprotone
+  network_mode: host
+  renderer_path: /dev/dri/renderD128
+  
+video_capture:
+  env:
+    - "RESOLUTION=w=1920:h=1080"
+    - "PIX_FORMAT=nv12"
+    - "THREADS=2"
+    - "FILTER_THREADS=1"
+    - "THREAD_QUEUE_SIZE=128"
+    - "FPS=60"
+    - "GOP=20"
+    - "CODEC=h264_vaapi"
+    - "TUNE=zerolatency"
+    - "PRESET=ultrafast"
+    - "PROFILE=high"
+    - "BITRATE=5000"
+    - "BUF_SIZE=10000"
+    - "PKT_SIZE=1400"
+
+audio_capture:
+  env:
+    - "PKT_SIZE=1000"
+
+streamer:
+  video_codec: h264 # must be the same as in docker
+  audio_codec: opus
+
+users_file_storage:
+  path : /home/vitalii/Development/Projects/cloud-gaming-storage
+  fs_init_files_dir: /home/vitalii/Development/Projects/cloud-gaming-storage/FILE_BASE
+
+virtual_display_initializer:
+  enable_virtual_displays_script_path: /home/vitalii/Development/Scripts/enable_virtual_displays/enable-virtual-screens.sh
+  display_info_json_path: /home/vitalii/Development/Scripts/enable_virtual_displays/display-info.json
+
+udp_reader:
+  min_port: 5000
+  max_port: 6000
+  read_buffer: 1500
+  udp_buffer: 5000
+
+#!!SECURITY CONFIG BLOCK (DO NOT SHARE)!!
+igbd:
+  id: some_id
+  token: secret
+
+certificates:
+  cert: /cert/cert.pem
+  key: /cert/key.pem
+  
+jwt:
+  secret_key: secret
+  expire: 24
+

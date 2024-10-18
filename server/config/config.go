@@ -11,17 +11,25 @@ import (
 )
 
 type Config struct {
-	Workdir      string
-	Environment  string `yaml:"environment" env-default:"local"`
-	IsDebug      bool   `yaml:"is_debug" env-default:"true"`
-	LogLevel     string `yaml:"log_level" env-default:"debug"`
-	MongoDb      `yaml:"mongodb"`
-	JWT          `yaml:"jwt"`
-	Server       `yaml:"server"`
-	Cors         `yaml:"cors"`
-	Certificates `yaml:"certificates"`
-	GameSearch   `yaml:"game_search"`
-	IGBD         `yaml:"igbd"`
+	Workdir                   string
+	Environment               string `yaml:"environment" env-default:"local"`
+	IsDebug                   bool   `yaml:"is_debug" env-default:"true"`
+	LogLevel                  string `yaml:"log_level" env-default:"debug"`
+	MongoDb                   `yaml:"mongodb"`
+	Postgres                  `yaml:"postgres"`
+	JWT                       `yaml:"jwt"`
+	Server                    `yaml:"server"`
+	Cors                      `yaml:"cors"`
+	Certificates              `yaml:"certificates"`
+	GameSearch                `yaml:"game_search"`
+	IGBD                      `yaml:"igbd"`
+	Streamer                  `yaml:"streamer"`
+	UsersFileStorage          `yaml:"users_file_storage"`
+	VirtualDisplayInitializer `yaml:"virtual_display_initializer"`
+	UDPReader                 `yaml:"udp_reader"`
+	Docker                    `yaml:"docker"`
+	VideoCapture              `yaml:"video_capture"`
+	AudioCapture              `yaml:"audio_capture"`
 }
 
 type Server struct {
@@ -54,6 +62,15 @@ type MongoDb struct {
 	Collections string `yaml:"collections"`
 }
 
+type Postgres struct {
+	Host     string `yaml:"host"`
+	Port     string `yaml:"port"`
+	Database string `yaml:"database"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	Attampts int    `yaml:"attampts"`
+}
+
 type JWT struct {
 	SecretKey string `yaml:"secret_key"`
 	Expire    int    `yaml:"expire"`
@@ -69,6 +86,45 @@ type GameSearch struct {
 type IGBD struct {
 	ID    string `yaml:"id"`
 	Token string `yaml:"token"`
+}
+type Streamer struct {
+	VideoCodec string `yaml:"video_codec"`
+	AudioCodec string `yaml:"audio_codec"`
+}
+
+type UsersFileStorage struct {
+	FsInitFilesPath string `yaml:"fs_init_files_dir"`
+	Path            string `yaml:"path"`
+}
+
+type VirtualDisplayInitializer struct {
+	EnableVirtualDisplaysScriptPath string `yaml:"enable_virtual_displays_script_path"`
+	DisplayInfoJsonPath             string `yaml:"display_info_json_path"`
+}
+type UDPReader struct {
+	MinPort    int `yaml:"min_port"`
+	MaxPort    int `yaml:"max_port"`
+	ReadBuffer int `yaml:"read_buffer"`
+	UdpBuffer  int `yaml:"udp_buffer"`
+}
+
+type Docker struct {
+	PulseImage   string `yaml:"pulse_image"`
+	VideoImage   string `yaml:"video_image"`
+	AudioImage   string `yaml:"audio_image"`
+	ProtoneImage string `yaml:"protone_image"`
+
+	CardPath       string `yaml:"card_path"`
+	NetworkMode    string `yaml:"network_mode"`
+	RendererPath   string `yaml:"renderer_path"`
+	XauthorityPath string `yaml:"xauthority_path"`
+}
+
+type VideoCapture struct {
+	Env []string `yaml:"env"`
+}
+type AudioCapture struct {
+	Env []string `yaml:"env"`
 }
 
 var instance *Config
