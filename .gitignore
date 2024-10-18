@@ -8,6 +8,7 @@ server/cert/*
 web/node_modules
 web/build
 web/cert/*
+web/src/assets/*
 #Other directories
 
 
