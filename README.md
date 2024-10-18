@@ -21,7 +21,6 @@
 
 I am excited to present my project, which I have been working on for the past year. It represents my personal take on cloud gaming and was inspired by projects like Google Stadia and Microsoft XCloud. The main idea of the project is to provide users with the ability to run AAA games on thin clients (such as phones, tablets, and PCs without graphics cards needed for complex graphical computations) through cloud technologies.
 
-
 ## Demo
 
 [![Watch the demo](./assets/demo.gif)](https://youtu.be/q_k8pBCw4QU)
