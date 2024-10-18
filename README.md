@@ -21,8 +21,11 @@
 
 I am excited to present my project, which I have been working on for the past year. It represents my personal take on cloud gaming and was inspired by projects like Google Stadia and Microsoft XCloud. The main idea of the project is to provide users with the ability to run AAA games on thin clients (such as phones, tablets, and PCs without graphics cards needed for complex graphical computations) through cloud technologies.
 
+<h2>Demo</h2>
+<iframe width="560" height="315" src="https://youtu.be/q_k8pBCw4QU" frameborder="0" allowfullscreen></iframe>
 
 ## Demo
+[Watch the video](https://youtu.be/q_k8pBCw4QU)
 
 ## Development environment
 
@@ -38,8 +41,12 @@ I am excited to present my project, which I have been working on for the past ye
 ## Acknowledgements
 A special thanks to my wife for independently creating the design for this project in Figma. This project was developed with her creative vision, and I deeply appreciate her hard work and dedication throughout the entire process.
 
--[Daria's Notion Portfolio](https://noiseless-giant-de5.notion.site/Daria-Furmanova-7eb639daae2a4c3a80779a1a3e47fad8)
+- [Daria's Notion Portfolio](https://noiseless-giant-de5.notion.site/Daria-Furmanova-7eb639daae2a4c3a80779a1a3e47fad8)
 
--[Project Desing](https://www.figma.com/design/k8omkRcRygvmN0byHsWpWE/Cloud-gaming?node-id=0-1&node-type=canvas&t=7FAcCzlvHcum)
-
+## Plans
+- [x] Add multi-controllers support  
+- [ ] Add keyboard and mouce suppor
+- [ ] Rewrite frontend with NEXT.js / React for SSR
+- [ ] Implament PostgreSQL support instead MongoDB
+- [ ] Implament QUIQ webtransport instaed of WebRTC
 ## From Autor 
