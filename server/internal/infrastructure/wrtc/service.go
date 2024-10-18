@@ -16,7 +16,7 @@ func NewStreamerService(videoCodec, audioCodec string) *StreamerService {
 	}
 }
 
-func (s *StreamerService) CreateRTC(onMessage func(data []byte)) (*WRTC, error) {
+func (s *StreamerService) CreateRTC(onMessage func(data []byte)) (WebRTC, error) {
 	rtc := newWRTC(onMessage, s.videoCodec, s.audioCodec, s.logger)
 	return rtc, nil
 }
