@@ -95,7 +95,7 @@ I am excited to present my project, which I have been working on for the past ye
 **For additional inquiries or issues related to building or starting the application, please refer to the Wiki section in "Technical Documents and Notes."**
 ## Technical documents and notes
 - [Wiki](https://github.com/FurmanovVitaliy/self-hosted-cloud-gaming-service/wiki)
-- [Third-party libraries](https://github.com/FurmanovVitaliy/self-hosted-cloud-gaming-service/wiki/Third-party-libraries)
+- [Third-party libraries and software](https://github.com/FurmanovVitaliy/self-hosted-cloud-gaming-service/wiki/Third-party-libraries)
 
 
 ## Current State of the Project
