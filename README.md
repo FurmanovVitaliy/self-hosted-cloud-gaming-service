@@ -91,10 +91,16 @@ I am excited to present my project, which I have been working on for the past ye
         cd self-hosted-cloud-gaming-service/web
         npm run start
         ```
+<<<<<<< HEAD
 
 ❗ 
 **For additional inquiries or issues related to building or starting the application, please refer to the Wiki section in "Technical Documents and Notes."**
 
+=======
+        
+        
+❗**For additional inquiries or issues related to building or starting the application, please refer to the Wiki section in "Technical Documents and Notes."**
+>>>>>>> 7bee4e9573574f5ee5291be2b5efd8318f6fad5c
 
 
 ## Technical documents and notes
