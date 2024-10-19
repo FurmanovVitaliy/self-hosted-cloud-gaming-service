@@ -1,4 +1,3 @@
-### LICENSE
 MIT License for Pixel Cloud
 
 Copyright (c) 2024 Vitalii Furmanov
@@ -21,33 +20,34 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-### Third-party libraries
 
-This project uses third-party libraries, which are subject to their own licenses:
-The following third-party libraries are used in this project, each licensed under their respective licenses. Please refer to the links for more details about the individual licenses.
+This project uses third-party libraries, which are subject to their own licenses. 
 
-- **uinput** (v0.0.0-20240425081052-3f90f2ee6365): [MIT License](https://opensource.org/licenses/MIT) - Created by [Benjamin Dahlmanns](https://github.com/FurmanovVitaliy/uinput)
-- **igdb** (v2.0.0-alpha.4): [MIT License](https://opensource.org/licenses/MIT) - Created by [Henry Sarabia](https://github.com/Henry-Sarabia/igdb)
-- **docker** (v27.3.1+incompatible): [Apache-2.0 License](https://www.apache.org/licenses/LICENSE-2.0) - Developed by [Moby Team](https://github.com/moby/moby)
-- **gin** (v1.10.0): [MIT License](https://opensource.org/licenses/MIT) - Developed by [Gin Team](https://github.com/gin-gonic/gin)
-- **golang-jwt** (v4.5.0): [MIT License](https://opensource.org/licenses/MIT) - Developed by [GoLang Team](https://github.com/golang-jwt/jwt)
-- **gorilla/websocket** (v1.5.3): [BSD-2-Clause License](https://opensource.org/licenses/BSD-2-Clause) - Developed by [Gorilla Team](https://github.com/gorilla/websocket)
-- **golang-evdev** (v0.0.0-20220815104727-7e27d6ce89b6): [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause) - Created by [Georgi Valkov](https://github.com/gvalkov/golang-evdev)
-- **cleanenv** (v1.5.0): [MIT License](https://opensource.org/licenses/MIT) - Developed by [Ilya Kaznacheev](https://github.com/ilyakaznacheev/cleanenv)
-- **pgx** (v4.18.3): [MIT License](https://opensource.org/licenses/MIT) - Developed by [Jack Christensen](https://github.com/jackc/pgx)
-- **httprouter** (v1.3.0): [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause) - Developed by [Julien Schmidt](https://github.com/julienschmidt/httprouter)
-- **webrtc** (v4.0.0-beta.33): [MIT License](https://opensource.org/licenses/MIT) - Developed by [Pion Team](https://github.com/pion/webrtc)
-- **cors** (v1.11.1): [MIT License](https://opensource.org/licenses/MIT) - Developed by [Olivier Poitrey](https://github.com/rs/cors)
-- **fuzzy** (v0.1.1): [MIT License](https://opensource.org/licenses/MIT) - Developed by [Sahil Muthoo](https://github.com/sahilm/fuzzy)
-- **logrus** (v1.9.3): [MIT License](https://opensource.org/licenses/MIT) - Developed by [Simon Eskildsen](https://github.com/sirupsen/logrus)
-- **mongo-driver** (v1.16.1): [Apache-2.0 License](https://www.apache.org/licenses/LICENSE-2.0) - Developed by [MongoDB Team](https://github.com/mongodb/mongo-go-driver)
-- **crypto** (v0.28.0): [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause) - Developed by [GoLang Team](https://github.com/golang/crypto)
-- **mgo** (v2.0.0-20190816093944-a6b53ec6cb22): [BSD-2-Clause License](https://opensource.org/licenses/BSD-2-Clause) - Developed by [MGO Team](http://labix.org/mgo)
-
-### Third-party software used in this project
+uinput: MIT License - Created by Benjamin Dahlmanns (https://github.com/bendahl/uinput)
+igdb: MIT License - Created by Henry Sarabia (https://github.com/Henry-Sarabia/igdb)
+docker: Apache-2.0 License - Developed by Moby Team (https://github.com/moby/moby)
+gin: MIT License - Developed by Gin Team (https://github.com/gin-gonic/gin)
+golang-jwt: MIT License - Developed by GoLang Team (https://github.com/golang-jwt/jwt)
+gorilla/websock: BSD-2-Clause License - Developed by Gorilla Team (https://github.com/gorilla/websocket)
+golang-evd: BSD-3-Clause License - Created by Georgi Valkov (https://github.com/gvalkov/golang-evdev)
+cleanenv: MIT License - Developed by Ilya Kaznacheev (https://github.com/ilyakaznacheev/cleanenv)
+pgx: MIT License - Developed by Jack Christensen (https://github.com/jackc/pgx)
+httprouter: BSD-3-Clause License - Developed by Julien Schmidt (https://github.com/julienschmidt/httprouter)
+webrtc (v4.0.0-beta.33): MIT License - Developed by Pion Team (https://github.com/pion/webrtc)
+cors: MIT License - Developed by Olivier Poitrey (https://github.com/rs/cors)
+fuzzy: MIT License - Developed by Sahil Muthoo (https://github.com/sahilm/fuzzy)
+logrus: MIT License - Developed by Simon Eskildsen (https://github.com/sirupsen/logrus)
+mongo-driv: Apache-2.0 License - Developed by MongoDB Team (https://github.com/mongodb/mongo-go-driver)
+crypto: BSD-3-Clause License - Developed by GoLang Team (https://github.com/golang/crypto)
+mgo: BSD-2-Clause License - Developed by MGO Team (http://labix.org/mgo)
 
 This project uses the following third-party software:
 
-- **FFmpeg**: [LGPL License](https://www.gnu.org/licenses/lgpl-3.0.html). FFmpeg is a multimedia framework used for video and audio processing. The version used in this project is installed from the Arch Linux repository. For details on the specific build options and configuration, refer to the Arch Linux FFmpeg package details [here](https://archlinux.org/packages/extra/x86_64/ffmpeg/).
--  **PortProtone**:[MIT License](https://opensource.org/licenses/MIT) A project designed to make running Windows games on Linux easy and convenient for both beginners and advanced users.
-The project aims to simplify the process of launching games (and other software) while also providing flexible settings for experienced users. Developed by [Mikhail Tergoev](https://github.com/Castro-Fidel)
+FFmpeg: LGPL License. FFmpeg is a multimedia framework used for video and audio processing. 
+  The version used in this project is installed from the Arch Linux repository. 
+  For details on the specific build options and configuration, refer to the Arch Linux FFmpeg package details: 
+  https://archlinux.org/packages/extra/x86_64/ffmpeg/
+
+PortProtone: MIT License. A project designed to make running Windows games on Linux easy and convenient for both beginners and advanced users. 
+  The project aims to simplify the process of launching games (and other software) while also providing flexible settings for experienced users. 
+  Developed by Mikhail Tergoev (https://github.com/Castro-Fidel)
