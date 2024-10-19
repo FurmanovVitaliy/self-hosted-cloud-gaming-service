@@ -63,6 +63,7 @@ func newDockerGroup(ctx context.Context, cfg *ContainerGroupConfig) (dg *dockerG
 	videoContainerConfigs := &container.Config{
 		Image: cfg.VideoImage,
 		Env:   cfg.VideoEnv,
+		Cmd:   []string{"sleep 10"},
 		Tty:   true,
 	}
 	audioContainerConfigs := &container.Config{
@@ -74,7 +75,7 @@ func newDockerGroup(ctx context.Context, cfg *ContainerGroupConfig) (dg *dockerG
 	protoneContainerConfigs := &container.Config{
 		Image: cfg.ProtoneImage,
 		Env:   cfg.ProtoneEnv,
-		Cmd:   []string{"sleep 10"},
+		Cmd:   []string{"sleep 0"},
 		Tty:   true,
 	}
 

@@ -5,6 +5,7 @@ declare global {
 		type IntrinsicElements = Record<keyof HTMLElementTagNameMap, Record<string, any>> & {
 			"null": Record<string, any>;
 			"game-slider": Record<string, any>;
+			"game-trailer-slider": Record<string, any>;
 			"room-display": Record<string, any>;
 			"main-nav": Record<string, any>;
 			"ion-icon": Record<string, any>;

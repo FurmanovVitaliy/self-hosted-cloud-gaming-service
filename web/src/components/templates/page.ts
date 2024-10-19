@@ -1,8 +1,9 @@
 import log from "@/common/log";
 
-abstract class Page {
+abstract class Page {// или более конкретный тип
+	public title = "Page";
+	protected params: Record<string, any> = {};
 	protected container: DocumentFragment | HTMLElement;
-	title = "Page";
 	private connectedCallbacks: Function [] = [];
 
 	constructor() {
@@ -11,28 +12,36 @@ abstract class Page {
 		this.container.classList.add("container");
 	}
 	
-	protected insertTemplate(template: HTMLElement | Node): void {
+	protected loadTemplate(template: HTMLElement | Node): void {
 		this.container.append(template);
 	}
 
-	protected addEventListener(selector: string, event: string, fx: Function, all:boolean=false): void {
+	protected addEventListener(selector: string, event: string, fx: Function, all: boolean = false): void {
+		if (!selector) {
+			window.addEventListener(event, (e) => fx.call(this, e)); // Правильная привязка контекста 'this'
+			return;
+		}
 		if (all) {
 			const elements = this.container.querySelectorAll(selector);
 			if (elements.length === 0) {
-				log.error(`Element not found: ${selector}`);
+				log.error(`Элемент не найден: ${selector}`);
 				return;
 			}
-			elements.forEach((element) => element.addEventListener(event, (e) => fx(e).bind(this)));
+			elements.forEach((element) => 
+				element.addEventListener(event, (e) => fx.call(this, e)) // Правильная привязка контекста 'this'
+			);
 			return;
 		}
+	
 		const element = this.container.querySelector(selector);
 		if (!element) {
-			log.error(`Element not found: ${selector}`);
+			log.error(`Элемент не найден: ${selector}`);
 			return;
 		}
-		element.addEventListener(event, (e) => fx(e));
+		element.addEventListener(event, (e) => fx.call(this, e)); // Правильная привязка контекста 'this'
 	}
-
+	
+	
 	protected addConnectedCallback(callback: Function): void {
 		this.connectedCallbacks.push(callback);
 	}
@@ -44,8 +53,12 @@ abstract class Page {
 		this.connectedCallbacks.forEach((callback) => callback());
 	}
 
+	public setParams(params: Record<string, any>): void {
+		this.params = params;
+	}
 
-	async render() {
+	async render(params?: Record<string, any>) {
+		this.params = params || {};
 		return this.container;
 	}
 }

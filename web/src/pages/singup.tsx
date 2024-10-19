@@ -1,16 +1,13 @@
 import Page from "@/components/templates/page";
 import authApi from "@/api/auth";
 import ResponseError from "@/api/err";
-import { eventColorizeInput, hidePassword } from "@/common/input-validations";
-
+import { eventColorizeInput, validateEmail, validatePassword, hidePassword } from "@/common/input-validations";
 import eventBus from "@/common/event-bus";
 import constants from "@/common/constants";
 
-//import "@css/login.css";
+type singupResponseData = { id: string; email: string; username: string };
 
-type loginResponseData = { id: string; username: string; access_token: string };
-
-class LoginPage extends Page {
+class SingUpPage extends Page {
 	private html = (
 		<null>
 			<section class='auth'>
@@ -21,10 +18,14 @@ class LoginPage extends Page {
 				</a>
 				<div class='auth-container'>
 					<form action='' animated-upd>
-						<h2>Login</h2>
+						<h2>SingUp</h2>
 						<div class='auth-container__input input-box'>
 							<label>Email</label>
 							<input email type='email' required placeholder='Email'></input>
+						</div>
+						<div class='auth-container__input input-box'>
+							<label>Username</label>
+							<input username type='text' required placeholder='Username'></input>
 						</div>
 						<div class='auth-container__input input-box'>
 							<label>Password</label>
@@ -34,15 +35,24 @@ class LoginPage extends Page {
 									<i class='icon icon--eye-off'></i>
 								</button>
 							</div>
-							<a href='/else'>Forget Password ?</a>
+							<span></span>
+						</div>
+						<div class='auth-container__input input-box'>
+							<label>Confirm Password</label>
+							<div class='input-box__input'>
+								<input password type='password' required autocomplete placeholder='Passworld'></input>
+								<button type='button'>
+									<i class='icon icon--eye-off'></i>
+								</button>
+							</div>
 						</div>
 						<button class='auth-container__button button button--main' type='submit'>
-							Login
+							SingUp
 						</button>
-						<p>
-							Don't have an account?{" "}
-							<a href={constants.routes.singup} inner-link>
-								SingUp
+						<p class='auth-form-change'>
+							Already have an account?{" "}
+							<a href={constants.routes.login} inner-link>
+								Login
 							</a>
 						</p>
 					</form>
@@ -58,34 +68,49 @@ class LoginPage extends Page {
 		this.loadTemplate(this.html);
 		//local events
 		this.addEventListener("input[email]", "input", eventColorizeInput);
-		this.addEventListener(".input-box__input button", "click", hidePassword);
 		this.addEventListener('button[type="submit"]', "click", this.handleSubmit);
+		this.addEventListener(".input-box__input button", "click", hidePassword, true);
 		//local functions
 		//connectedCallback
 	}
 	//! all appeal to html documents as this.container
-
 	private async handleSubmit(e: Event) {
 		const emailInput = document.querySelector("input[email]") as HTMLInputElement;
-		const passwordInput = document.querySelector("input[password]") as HTMLInputElement;
-
+		const username = document.querySelector("input[username]") as HTMLInputElement;
+		const passwordInput = document.querySelectorAll("input[password]") as NodeListOf<HTMLInputElement>;
 		e.preventDefault();
-		if (!emailInput.value || !passwordInput.value) {
-			alert("Please provide both email and password.");
+
+		if (!validateEmail(emailInput.value)) {
+			alert("Please provide a valid email.");
+			return;
+		}
+		if (!username.value) {
+			alert("Please provide a username.");
 			return;
 		}
 
+		if (!validatePassword(passwordInput[0].value)) {
+			alert("Please provide a valid password.");
+			return;
+		}
+		if (passwordInput[0].value !== passwordInput[1].value) {
+			alert("Passwords do not match.");
+			return;
+		}
 		const submitButton = document.querySelector('button[type="submit"]') as HTMLButtonElement;
 		if (submitButton) {
 			submitButton.disabled = true;
 			submitButton.textContent = "Logging in...";
 		}
 		try {
-			const responseData = (await authApi.login(emailInput.value, passwordInput.value)) as loginResponseData;
-			localStorage.setItem("access_token", responseData.access_token);
+			const responseData = (await authApi.signup(
+				emailInput.value,
+				username.value,
+				passwordInput[0].value,
+			)) as singupResponseData;
 			localStorage.setItem("userId", responseData.id);
 			localStorage.setItem("username", responseData.username);
-			eventBus.notify("nav", constants.routes.home);
+			eventBus.notify("nav", constants.routes.login);
 		} catch (error) {
 			if (error instanceof ResponseError) {
 				alert(error.details);
@@ -99,8 +124,9 @@ class LoginPage extends Page {
 			}
 		}
 	}
+
 	async render() {
 		return this.container;
 	}
 }
-export default LoginPage;
+export default SingUpPage;

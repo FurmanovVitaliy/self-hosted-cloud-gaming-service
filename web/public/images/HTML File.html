@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+    <header></header>
+    <main>Понял. Для создания SVG логотипа, где буква "H" будет стилизована под очертания геймпада, а текст будет использовать шрифт Poppins, нам потребуется выполнить следующие шаги:
+
+    Создать SVG с текстом "Home" с использованием шрифта Poppins.
+    Стилизовать букву "H" под логотип геймпада.
+
+Шаг 1: Создание SVG с текстом "Home" и шрифтом Poppins
+
+xml
+
+<svg width="300" height="100" xmlns="http://www.w3.org/2000/svg">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400&display=swap');
+    .text {
+      font-family: 'Poppins', sans-serif;
+      font-size: 48px;
+      font-weight: 400;
+      fill: black;
+    }
+    .gamepad {
+      fill: url(#gradient);
+    }
+  </style>
+
+  <!-- Определение градиента для заливки -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color: #1DE9B6; stop-opacity: 1" />
+      <stop offset="100%" style="stop-color: #F50057; stop-opacity: 1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Логотип в форме буквы H -->
+  <g transform="translate(0, 0)">
+    <path class="gamepad" d="M 10 20 Q 10 10, 20 10 L 40 10 Q 50 10, 50 20 L 50 40 Q 50 50, 40 50 L 20 50 Q 10 50, 10 40 Z M 20 20 L 20 40 M 40 20 L 40 40" />
+  </g>
+
+  <!-- Остальные буквы "ome" -->
+  <text x="60" y="50" class="text">ome</text>
+</svg></main>
+    <footer></footer>
+  </body>
+</html>

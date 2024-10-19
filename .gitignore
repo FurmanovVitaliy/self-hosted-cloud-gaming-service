@@ -10,5 +10,4 @@ web/build
 web/cert/*
 web/src/assets/*
 #Other directories
-
-
+web/public/*.webm
