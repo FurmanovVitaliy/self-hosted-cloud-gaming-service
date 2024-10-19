@@ -27,23 +27,22 @@ I am excited to present my project, which I have been working on for the past ye
 
 
 ## Development environment
-- **Operating System**: Arch Linux 
+- **Operating System**: Arch Linux.
 - **Programming Language**: Go.
 - **Hardware Requirements**: AMD GPU (not tested with NVIDIA GPUs).
-- **Dependencies**:
-   **Package Manager**: `yay` is used for installing necessary packages.
-   **Installed Packages**:
-    - `xorg-xrandr`: Utility for managing screen resolution and display settings in X11.
-    - `drm_info`: For gathering information about Direct Rendering Manager (DRM) on the system.
-    - `mongodb`: Database used in the project.
-    - `ffmpeg`: The latest version of FFmpeg for handling video encoding and streaming.
-    - `js`: JavaScript-related tools or libraries.
-   **AMD GPU Drivers**:
-    - `mesa`, `lib32-mesa`: Open-source graphics drivers.
+- **Installed Packages**:
+  - `yay`: is used for installing necessary packages.
+  - `xorg-xrandr`: Utility for managing screen resolution and display settings in X11.
+  - `drm_info`: For gathering information about Direct Rendering Manager (DRM) on the system.
+   - `mongodb`: Database used in the project.
+   - `ffmpeg`: The latest version of FFmpeg for handling video encoding and streaming.
+   - `js`: JavaScript-related tools or libraries.
+- **AMD GPU Drivers**:
+   - `mesa`, `lib32-mesa`: Open-source graphics drivers.
     - `xf86-video-amdgpu`: Driver for AMD GPUs.
     - `vulkan-radeon`, `lib32-vulkan-radeon`: Vulkan support for AMD GPUs.
     - `libva-mesa-driver`: For video acceleration (VAAPI) on AMD GPUs.
-  - **Certificates**: `mkcert` is used for generating local certificates.
+- **Certificates**: `mkcert` is used for generating local certificates.
 
 **Setup**:
   1. Ensure that Docker and Docker Compose are installed.
