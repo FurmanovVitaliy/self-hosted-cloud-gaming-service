@@ -31,21 +31,21 @@ I am excited to present my project, which I have been working on for the past ye
 - **Programming Language**: Go.
 - **Hardware Requirements**: AMD GPU (not tested with NVIDIA GPUs).
 - **Dependencies**:
-  - **Package Manager**: `yay` is used for installing necessary packages.
-  - **Installed Packages**:
+   **Package Manager**: `yay` is used for installing necessary packages.
+   **Installed Packages**:
     - `xorg-xrandr`: Utility for managing screen resolution and display settings in X11.
     - `drm_info`: For gathering information about Direct Rendering Manager (DRM) on the system.
     - `mongodb`: Database used in the project.
     - `ffmpeg`: The latest version of FFmpeg for handling video encoding and streaming.
     - `js`: JavaScript-related tools or libraries.
-  - **AMD GPU Drivers**:
+   **AMD GPU Drivers**:
     - `mesa`, `lib32-mesa`: Open-source graphics drivers.
     - `xf86-video-amdgpu`: Driver for AMD GPUs.
     - `vulkan-radeon`, `lib32-vulkan-radeon`: Vulkan support for AMD GPUs.
     - `libva-mesa-driver`: For video acceleration (VAAPI) on AMD GPUs.
   - **Certificates**: `mkcert` is used for generating local certificates.
 
-- **Setup**:
+**Setup**:
   1. Ensure that Docker and Docker Compose are installed.
   2. Install required packages using:
   3. ```bash
@@ -92,7 +92,7 @@ I am excited to present my project, which I have been working on for the past ye
         cd self-hosted-cloud-gaming-service/web
         npm run start
         ```
-        <span style="color: tomato;">For additional inquiries or issues related to building or starting the application, please refer to the Wiki section in "Technical Documents and Notes."
+<span style="color: tomato;">For additional inquiries or issues related to building or starting the application, please refer to the Wiki section in "Technical Documents and Notes."
 </span>
 
 ## Technical documents and notes
