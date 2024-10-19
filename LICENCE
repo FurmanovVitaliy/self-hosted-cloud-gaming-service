@@ -1,4 +1,4 @@
-# LICENSE
+### LICENSE
 MIT License for Pixel Cloud
 
 Copyright (c) 2024 Vitalii Furmanov
@@ -21,7 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 
-# Third-party libraries
+### Third-party libraries
 
 This project uses third-party libraries, which are subject to their own licenses:
 The following third-party libraries are used in this project, each licensed under their respective licenses. Please refer to the links for more details about the individual licenses.
@@ -43,3 +43,11 @@ The following third-party libraries are used in this project, each licensed unde
 - **mongo-driver** (v1.16.1): [Apache-2.0 License](https://www.apache.org/licenses/LICENSE-2.0) - Developed by [MongoDB Team](https://github.com/mongodb/mongo-go-driver)
 - **crypto** (v0.28.0): [BSD-3-Clause License](https://opensource.org/licenses/BSD-3-Clause) - Developed by [GoLang Team](https://github.com/golang/crypto)
 - **mgo** (v2.0.0-20190816093944-a6b53ec6cb22): [BSD-2-Clause License](https://opensource.org/licenses/BSD-2-Clause) - Developed by [MGO Team](http://labix.org/mgo)
+
+### Third-party software used in this project
+
+This project uses the following third-party software:
+
+- **FFmpeg**: [LGPL License](https://www.gnu.org/licenses/lgpl-3.0.html). FFmpeg is a multimedia framework used for video and audio processing. The version used in this project is installed from the Arch Linux repository. For details on the specific build options and configuration, refer to the Arch Linux FFmpeg package details [here](https://archlinux.org/packages/extra/x86_64/ffmpeg/).
+-  **PortProtone**:[MIT License](https://opensource.org/licenses/MIT) A project designed to make running Windows games on Linux easy and convenient for both beginners and advanced users.
+The project aims to simplify the process of launching games (and other software) while also providing flexible settings for experienced users. Developed by [Mikhail Tergoev](https://github.com/Castro-Fidel)
