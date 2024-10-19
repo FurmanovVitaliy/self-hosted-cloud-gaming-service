@@ -1,18 +1,21 @@
+## Example config file for GameService
+## You can copy this file and rename it to local.yaml
+## Then you can change values in local.yaml to your own 
 app:
-  name: GameService
+  name: Pixel Cloud 
   version: 1.0.0
-environment: local #local, dev, prod
+environment: local 
 
 is_debug: true
 
-log_level: debug #debug, info, warn, error, fatal, panic
+log_level: debug # debug, info, warn, error, fatal, panic
 
 router: httprouter  
 
 cors:
   allowed_origins:
-    - "https://localhost:3000"
-    - "https://192.168.1.13:3000"
+    - "https://localhost:3000" # add your frontend url here
+    - "https://192.168.1.13:3000" # add your frontend url here
   allowed_methods:
     - GET
     - POST
@@ -25,50 +28,42 @@ cors:
   max_age: 300
 
 server:
-  type: port #Use 'port' for TCP or 'socket' for UNIX Socket(no need ip & port values)
-  bind_ip: localhost
-  port: 8000
+  type: port 
+  bind_ip: localhost # ip to bind
+  port: 8000  # port for http server
 
 mongodb:
-  host: localhost
-  port: 27017
-  database: gameservice
+  host: localhost # host of mongodb
+  port: 27017 # port of mongodb
+  database: gameservice # database name
   username:
   auth_db:
   password:
-  collections: users
-
-postgres:
-  host: "localhost"
-  port: 5432
-  username: "vitalii"
-  password: ""
-  database: pixelCloud
-  attampts: 5
+  collections: users 
 
 game_search:
-  extenstions: #game extantions 
-    - .nsp #Nintendo Switch
-    - .exe #Windows
-    - .x86_64 #Linux
-  directories: #directories to scan for games
-    - "/home/vitalii/Games/Win"
-    - "/home/vitalii/Games/Nintendo"
+  extenstions: 
+    - .nsp
+    - .exe 
+    - .x86_64 
+  directories: #directories to scan for games !!!IMPORTANT (add your directories here)
+    - "/home/USER/Games/Win"
+    - "/home/USER/Games/Nintendo"
   names_to_compare: #dificult names to parse (if your game not appear in search, try to add correct game name here)
     - "Red Dead Redemption 2"
     - "Elden Ring"
     - "The Witcher 3: Wild Hunt"
     - "Project Zomboid"
 
-docker:
-  pulse_image: arch:pulseaudio
+docker: #Put your docker images names here
+  pulse_image: arch:pulseaudio 
   video_image: arch:ffmpeg-video
   audio_image: arch:ffmpeg-audio
   protone_image: arch:portprotone
   network_mode: host
   renderer_path: /dev/dri/renderD128
   
-video_capture:
+video_capture: #All variables for video capture can be changed but not deleted
   env:
     - "RESOLUTION=w=1920:h=1080"
     - "PIX_FORMAT=nv12"
@@ -93,26 +88,26 @@ streamer:
   video_codec: h264 # must be the same as in docker
   audio_codec: opus
 
-users_file_storage:
-  path : /home/vitalii/Development/Projects/cloud-gaming-storage
-  fs_init_files_dir: /home/vitalii/Development/Projects/cloud-gaming-storage/FILE_BASE
+users_file_storage: #Path to store user files !!!IMPORTANT (add your path here)
+  path : /home/USER/Development/Projects/cloud-gaming-storage
+  fs_init_files_dir: /home/USER/Development/Projects/cloud-gaming-storage/FILE_BASE
 
-virtual_display_initializer:
+virtual_display_initializer: #Path to scripts for virtual displays !!!IMPORTANT (add your path here)
   enable_virtual_displays_script_path: /home/vitalii/Development/Scripts/enable_virtual_displays/enable-virtual-screens.sh
   display_info_json_path: /home/vitalii/Development/Scripts/enable_virtual_displays/display-info.json
 
-udp_reader:
-  min_port: 5000
-  max_port: 6000
-  read_buffer: 1500
-  udp_buffer: 5000
+udp_reader: 
+  min_port: 5000 #UDP reader config/ this rage of ports will be used for udp reader
+  max_port: 6000 #UDP reader config/ this rage of ports will be used for udp reader
+  read_buffer: 10000
+  udp_buffer: 10000
 
 #!!SECURITY CONFIG BLOCK (DO NOT SHARE)!!
-igbd:
+igbd: #IGDB API 
   id: some_id
   token: secret
 
-certificates:
+certificates: #Path to certificates !!!IMPORTANT (add your path here)
   cert: /cert/cert.pem
   key: /cert/key.pem
   
